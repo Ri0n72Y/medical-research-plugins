@@ -3,7 +3,7 @@ import { mkdir, rename, rm, stat } from 'node:fs/promises'
 import { createWriteStream } from 'node:fs'
 import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
-import { fastFileMatches, md5File, sha256Text, stableJson } from './io.mjs'
+import { fastFileMatches, fileExists, md5File, sha256Text, stableJson } from './io.mjs'
 
 export const GDC_API = 'https://api.gdc.cancer.gov'
 export const PROJECT_ID = 'TCGA-LAML'
@@ -102,6 +102,8 @@ export function safeFileName(name) {
 
 export async function snapshotIsComplete(workspace, sourceState) {
   if (!sourceState || sourceState.status !== 'complete' || !Array.isArray(sourceState.files)) return false
+  if (!sourceState.manifest || !await fileExists(join(workspace, sourceState.manifest))) return false
+  if (!sourceState.clinical || !await fileExists(join(workspace, sourceState.clinical))) return false
   for (const file of sourceState.files) {
     const path = join(workspace, file.path)
     if (!(await fastFileMatches(path, file.file_size))) return false
