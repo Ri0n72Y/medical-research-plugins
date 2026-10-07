@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { mkdir } from 'node:fs/promises'
+import { mkdir, rm } from 'node:fs/promises'
 import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { caseIds, casesUrl, clinicalDigest, downloadExpressionFile, fetchJson, filesUrl, normalizeFiles, snapshotIsComplete, sourceDigest } from './lib/gdc.mjs'
@@ -67,15 +67,18 @@ async function recordRefreshCheck(workspace, payload) {
 
 export async function acquireSource({ workspace, refresh = false, concurrency = 4, fetchImpl = fetch, onProgress = () => {} }) {
   const statePath = join(workspace, 'study/source.json')
+  const pendingPath = join(workspace, 'study/source-pending.json')
   const active = await readJsonIfExists(statePath)
+  const pending = await readJsonIfExists(pendingPath)
+
+  if (!refresh && pending?.status === 'partial' && Array.isArray(pending.files)) {
+    onProgress({ phase: 'resume', snapshot: pending.snapshot, files: pending.files.length })
+    return finishSnapshot({ workspace, statePath, pendingPath, source: pending, concurrency, fetchImpl, resumed: true, onProgress })
+  }
+
   if (!refresh && await snapshotIsComplete(workspace, active)) {
     await writeStudyStatus(workspace, active, 'local cached source reused; no GDC request was made')
     return { status: 'cache-hit', snapshot: active.snapshot, files: active.files.length, source: active }
-  }
-
-  if (!refresh && active?.status === 'partial' && Array.isArray(active.files)) {
-    onProgress({ phase: 'resume', snapshot: active.snapshot, files: active.files.length })
-    return finishSnapshot({ workspace, statePath, source: active, concurrency, fetchImpl, resumed: true, onProgress })
   }
 
   const queryStartedAt = nowIso()
@@ -125,24 +128,18 @@ export async function acquireSource({ workspace, refresh = false, concurrency = 
     files: files.map(file => ({ ...file, path: workspacePath(workspace, join(rawRoot, 'expression', file.file_name)) })),
   }
   await writeJsonAtomic(join(manifestDir, 'source-manifest.json'), source)
-  await writeJsonAtomic(statePath, source)
+  await writeJsonAtomic(pendingPath, source)
   await writeStudyStatus(workspace, source, 'source manifest created; expression download is incomplete')
-  return finishSnapshot({ workspace, statePath, source, concurrency, fetchImpl, resumed: false, onProgress })
+  return finishSnapshot({ workspace, statePath, pendingPath, source, concurrency, fetchImpl, resumed: false, onProgress })
 }
 
-async function finishSnapshot({ workspace, statePath, source, concurrency, fetchImpl, resumed, onProgress }) {
+async function finishSnapshot({ workspace, statePath, pendingPath, source, concurrency, fetchImpl, resumed, onProgress }) {
   const expressionDir = join(workspace, 'data/raw/gdc', source.snapshot, 'expression')
   let completedCount = 0
   const results = await mapLimit(source.files, concurrency, async file => {
     const result = await downloadExpressionFile(file, expressionDir, fetchImpl)
     completedCount += 1
-    onProgress({
-      phase: 'download',
-      completed: completedCount,
-      total: source.files.length,
-      file: file.file_name,
-      reused: result.reused,
-    })
+    onProgress({ phase: 'download', completed: completedCount, total: source.files.length, file: file.file_name, reused: result.reused })
     return result
   })
   const completed = {
@@ -154,11 +151,8 @@ async function finishSnapshot({ workspace, statePath, source, concurrency, fetch
   }
   await writeJsonAtomic(join(workspace, source.manifest), completed)
   await writeJsonAtomic(statePath, completed)
-  await writeStudyStatus(
-    workspace,
-    completed,
-    resumed ? 'source acquisition resumed and completed' : 'public source acquired and verified',
-  )
+  await rm(pendingPath, { force: true })
+  await writeStudyStatus(workspace, completed, resumed ? 'source acquisition resumed and completed' : 'public source acquired and verified')
   return {
     status: resumed ? 'resumed-complete' : 'downloaded',
     snapshot: completed.snapshot,
@@ -172,10 +166,7 @@ async function finishSnapshot({ workspace, statePath, source, concurrency, fetch
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   try {
     const args = parseArgs(process.argv.slice(2))
-    const result = await acquireSource({
-      ...args,
-      onProgress: event => console.error(JSON.stringify(event)),
-    })
+    const result = await acquireSource({ ...args, onProgress: event => console.error(JSON.stringify(event)) })
     console.log(JSON.stringify(result, null, 2))
   } catch (error) {
     console.error(error instanceof Error ? error.stack ?? error.message : String(error))
