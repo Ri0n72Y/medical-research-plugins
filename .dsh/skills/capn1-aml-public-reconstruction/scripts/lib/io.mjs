@@ -34,11 +34,15 @@ export async function readJsonIfExists(path) {
   return readJson(path)
 }
 
-export async function writeJsonAtomic(path, value) {
+export async function writeTextAtomic(path, content) {
   await mkdir(dirname(path), { recursive: true })
   const tmp = `${path}.tmp-${process.pid}`
-  await writeFile(tmp, `${JSON.stringify(value, null, 2)}\n`, 'utf8')
+  await writeFile(tmp, content, 'utf8')
   await rename(tmp, path)
+}
+
+export async function writeJsonAtomic(path, value) {
+  return writeTextAtomic(path, `${JSON.stringify(value, null, 2)}\n`)
 }
 
 export async function md5File(path) {
