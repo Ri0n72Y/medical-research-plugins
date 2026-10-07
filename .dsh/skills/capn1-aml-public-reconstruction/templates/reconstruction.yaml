@@ -1,0 +1,60 @@
+study:
+  id: capn1-aml-public-reconstruction
+  status: initialized
+  canonical: true
+
+source:
+  cohort:
+    project: TCGA-LAML
+    provider: NCI-GDC
+    class: PUBLIC-FIXED
+  expression:
+    class: PUBLIC-FIXED
+    representation: null
+    release: null
+  clinical:
+    class: PUBLIC-FIXED
+    release: null
+
+stages:
+  reference-map:
+    class: PUBLIC-FIXED
+    status: pending
+  source-acquisition:
+    class: PUBLIC-FIXED
+    status: pending
+  processing-qc:
+    class: PUBLIC-FIXED
+    status: pending
+  expression:
+    class: PUBLIC-FIXED
+    status: pending
+  survival:
+    class: PUBLIC-FIXED
+    decisions: [D1, D2]
+    status: pending
+  differential-expression:
+    class: PUBLIC-FIXED
+    decisions: [D3]
+    status: pending
+  enrichment:
+    class: RECONSTRUCTED
+    original: DAVID
+    reconstruction: clusterProfiler
+    status: pending
+  ppi:
+    class: PUBLIC-FIXED
+    decisions: [D4]
+    status: pending
+  immune:
+    class: OPTIONAL
+    decisions: [D5]
+    status: pending
+  report:
+    class: PUBLIC-FIXED
+    status: pending
+
+cache:
+  policy: cache-first
+  refresh: explicit-only
+  overwrite_completed_runs: false

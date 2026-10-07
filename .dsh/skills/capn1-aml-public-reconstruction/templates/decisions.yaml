@@ -1,0 +1,47 @@
+decisions:
+  D1:
+    name: CAPN1 high / low grouping
+    status: unresolved
+    proposed_default: median
+    selected: null
+    source: researcher
+    rationale: null
+
+  D2:
+    name: multivariable survival covariates
+    status: unresolved
+    proposed_default: no-multivariable-model
+    selected: null
+    source: researcher
+    rationale: null
+
+  D3:
+    name: DEG threshold
+    status: unresolved
+    proposed_default:
+      fdr_lt: 0.05
+      abs_log2fc_gte: 1
+    selected: null
+    source: researcher
+    rationale: null
+
+  D4:
+    name: STRING confidence
+    status: unresolved
+    proposed_default: 400
+    selected: null
+    source: researcher
+    rationale: null
+
+  D5:
+    name: immune deconvolution path
+    status: unresolved
+    proposed_default: ssgsea-only
+    allowed:
+      - ssgsea-only
+      - public-substitute
+      - user-supplied-cibersort
+      - skip-deconvolution
+    selected: null
+    source: researcher
+    rationale: null
