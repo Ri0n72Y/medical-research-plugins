@@ -3,7 +3,7 @@ import { mkdir } from 'node:fs/promises'
 import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { caseIds, casesUrl, clinicalDigest, downloadExpressionFile, fetchJson, filesUrl, normalizeFiles, snapshotIsComplete, sourceDigest } from './lib/gdc.mjs'
-import { readJsonIfExists, writeJsonAtomic } from './lib/io.mjs'
+import { readJsonIfExists, writeJsonAtomic, writeTextAtomic } from './lib/io.mjs'
 
 export function parseArgs(argv) {
   const result = { workspace: process.cwd(), refresh: false, concurrency: 4 }
@@ -41,6 +41,25 @@ function stamp(value = new Date()) {
   return value.toISOString().replaceAll(':', '').replaceAll('-', '').replace('.000Z', 'Z')
 }
 
+function workspacePath(workspace, target) {
+  return relative(workspace, target).replaceAll('\\', '/')
+}
+
+async function writeStudyStatus(workspace, source, note) {
+  const next = source.status === 'complete' ? 'processing and cohort QC' : 'resume source acquisition'
+  const lines = [
+    '# Study status', '',
+    `- Source acquisition: ${source.status}.`,
+    `- Active source snapshot: ${source.snapshot}.`,
+    `- TCGA-LAML cases: ${source.cases ?? 'unknown'}.`,
+    `- STAR - Counts files: ${source.files?.length ?? 0}.`,
+    `- Source bytes: ${source.total_bytes ?? 'unknown'}.`,
+    `- Note: ${note}.`,
+    `- Next canonical stage: ${next}.`, '',
+  ]
+  await writeTextAtomic(join(workspace, 'study/status.md'), lines.join('\n'))
+}
+
 async function recordRefreshCheck(workspace, payload) {
   const path = join(workspace, 'data/manifests/gdc/refresh-checks', `${stamp()}.json`)
   await writeJsonAtomic(path, payload)
@@ -50,6 +69,7 @@ export async function acquireSource({ workspace, refresh = false, concurrency = 
   const statePath = join(workspace, 'study/source.json')
   const active = await readJsonIfExists(statePath)
   if (!refresh && await snapshotIsComplete(workspace, active)) {
+    await writeStudyStatus(workspace, active, 'local cached source reused; no GDC request was made')
     return { status: 'cache-hit', snapshot: active.snapshot, files: active.files.length, source: active }
   }
 
@@ -78,6 +98,7 @@ export async function acquireSource({ workspace, refresh = false, concurrency = 
       checked_at: nowIso(), query_started_at: queryStartedAt, project: 'TCGA-LAML',
       observed_snapshot: snapshot, observed_digest: digest, changed: false,
     })
+    await writeStudyStatus(workspace, active, 'GDC was re-queried; the public source fingerprint was unchanged')
     return { status: 'refresh-unchanged', snapshot, files: files.length, source: active }
   }
 
@@ -96,15 +117,16 @@ export async function acquireSource({ workspace, refresh = false, concurrency = 
     snapshot,
     digest,
     queried_at: queryStartedAt,
-    manifest: relative(workspace, join(manifestDir, 'source-manifest.json')),
-    clinical: relative(workspace, join(rawRoot, 'clinical/cases.json')),
+    manifest: workspacePath(workspace, join(manifestDir, 'source-manifest.json')),
+    clinical: workspacePath(workspace, join(rawRoot, 'clinical/cases.json')),
     cases: cases.length,
     clinical_digest: clinical,
     total_bytes: totalBytes,
-    files: files.map(file => ({ ...file, path: relative(workspace, join(rawRoot, 'expression', file.file_name)) })),
+    files: files.map(file => ({ ...file, path: workspacePath(workspace, join(rawRoot, 'expression', file.file_name)) })),
   }
   await writeJsonAtomic(join(manifestDir, 'source-manifest.json'), source)
   await writeJsonAtomic(statePath, source)
+  await writeStudyStatus(workspace, source, 'source manifest created; expression download is incomplete')
   return finishSnapshot({ workspace, statePath, source, concurrency, fetchImpl, resumed: false, onProgress })
 }
 
@@ -132,6 +154,11 @@ async function finishSnapshot({ workspace, statePath, source, concurrency, fetch
   }
   await writeJsonAtomic(join(workspace, source.manifest), completed)
   await writeJsonAtomic(statePath, completed)
+  await writeStudyStatus(
+    workspace,
+    completed,
+    resumed ? 'source acquisition resumed and completed' : 'public source acquired and verified',
+  )
   return {
     status: resumed ? 'resumed-complete' : 'downloaded',
     snapshot: completed.snapshot,
