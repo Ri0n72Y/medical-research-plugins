@@ -92,12 +92,14 @@ The current M1 runner requires Node 18+ with built-in `fetch`. Use the existing 
 
 For initialization, run the init resource only if `study/reconstruction.yaml` is absent. It must preserve existing researcher files.
 
-For source acquisition, inspect `study/source.json` first:
+For source acquisition, inspect both `study/source.json` and `study/source-pending.json`:
 
-- complete compatible local source -> disclose cache use and reuse it;
-- partial source -> run the source resource without `--refresh` to resume;
-- no source -> run without `--refresh` to acquire public TCGA-LAML;
+- compatible completed `study/source.json` -> disclose cache use and reuse it for ordinary research work;
+- pending acquisition + user wants to continue acquisition -> run without `--refresh` to resume it;
+- no completed or pending source -> run without `--refresh` to acquire public TCGA-LAML;
 - explicit refresh/latest request -> run with `--refresh`.
+
+A pending acquisition does not invalidate an older completed active source. A changed refresh becomes active only after the new snapshot fully validates.
 
 Never add `--refresh` merely because a new chat/session began.
 
