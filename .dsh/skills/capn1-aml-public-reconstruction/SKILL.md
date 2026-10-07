@@ -63,6 +63,19 @@ Prefer these study areas when they exist:
 
 Do not create a database or hidden state service for v0.
 
+## M1 executable resources
+
+M1 provides two deterministic Node resources:
+
+- `scripts/init-workspace.mjs` — create only missing workspace directories and initial study files;
+- `scripts/gdc-source.mjs` — acquire, resume, refresh, or reuse the public TCGA-LAML GDC source cache.
+
+Resolve these through the skill resource paths supplied by DSH. Do not assume the repository-relative path after the skill is packaged.
+
+The current M1 runner requires a Node runtime with built-in `fetch` support (Node 18+). Use the existing DSH execution surface. If the target carrier cannot execute the bundled script, report that runtime compatibility gap; do not install an ad-hoc runtime or invent a new Cordis service during the research run.
+
+Source acquisition may take long enough to benefit from DSH's existing background job support. Use that support when available instead of adding a project-owned job system.
+
 ## Reconstruction classes
 
 Every canonical step has one of four meanings:
@@ -94,11 +107,13 @@ Record every accepted decision in workspace study state before downstream formal
 
 ### Stage 0 — Inspect / initialize
 
-If the study is absent, initialize only the minimal workspace state from the templates bundled with this skill.
+Inspect the workspace before executing a helper.
+
+If `study/reconstruction.yaml` is absent, run the bundled `scripts/init-workspace.mjs` against the current workspace. The script copies only missing templates and must not replace existing researcher state.
 
 Do not fetch public data merely because the study was initialized.
 
-If the study already exists, preserve it and continue from its recorded state.
+If the study already exists, preserve it and continue from its recorded state. Treat `study/source.json` as the machine-readable source state and `study/status.md` as the human-readable summary.
 
 ### Stage 1 — Public reference and method map
 
@@ -112,11 +127,24 @@ Do not invent unavailable original parameters.
 
 Class: `PUBLIC-FIXED`.
 
-Use NCI GDC public data.
+Use NCI GDC public data through the bundled `scripts/gdc-source.mjs`.
 
-If compatible local source data and manifests exist, reuse them unless the user explicitly requests refresh.
+Before running it, inspect `study/source.json` and the referenced files. If a compatible complete local source already satisfies the request, tell the researcher that the local GDC cache is being used and do not make a network request.
 
-On a fresh acquisition, preserve the public query / manifest / release metadata needed to explain exactly what was retrieved.
+For a fresh source acquisition, run the script without `--refresh`. It queries public TCGA-LAML STAR - Counts files plus public case metadata, writes the exact query/manifests, streams expression files into a content-addressed snapshot, and validates downloaded files against GDC size and MD5 metadata.
+
+If `study/source.json` is `partial`, run the same command without `--refresh`; it resumes from the saved manifest instead of re-querying GDC.
+
+Use `--refresh` only when the researcher explicitly asks to refetch, check current/latest public data, or start again from the public source. An unchanged refresh should re-query GDC but reuse the existing local expression files.
+
+Recognize the source script status values:
+
+- `cache-hit` — no GDC request was made;
+- `downloaded` — a source snapshot was acquired;
+- `resumed-complete` — an interrupted snapshot was completed from its saved manifest;
+- `refresh-unchanged` — GDC was re-queried, the source fingerprint was unchanged, and no redundant data download occurred.
+
+On a fresh acquisition, preserve the public query, clinical source response, file manifest, source digest, and workspace-relative paths needed to explain exactly what was retrieved.
 
 ### Stage 3 — Processing and cohort QC
 
