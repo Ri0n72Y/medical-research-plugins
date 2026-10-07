@@ -26,7 +26,7 @@ For every implementation task, use this order:
 | shell execution | DSH bash/pwsh/jobs | R/Python/CLI runtime | scripts | no |
 | public web reading | DSH web search/fetch | public web | search strategy in skill | no |
 | external tool bridge | DSH MCP client | suitable MCP server | configuration only if used | no |
-| GDC discovery / download | DSH shell/web | NCI GDC API | thin fetch/manifest script | no |
+| GDC discovery / download | DSH shell/jobs | NCI GDC API | M1 `scripts/gdc-source.mjs` | no |
 | clinical/expression normalization | DSH shell | R/Python scientific stack | thin deterministic script | no |
 | cohort QC | DSH shell | R/Python table tooling | thin deterministic script | no |
 | survival analysis | DSH shell | R survival ecosystem | thin deterministic script | no |
@@ -42,9 +42,14 @@ For every implementation task, use this order:
 
 ## Real unresolved capability
 
-The main unresolved implementation issue is not a Harness service. It is a **reproducible scientific runtime**, especially the R / Bioconductor dependency set.
+M1 did not reveal a need for a new Cordis service. Public source acquisition is currently covered by a thin Node script plus DSH shell/jobs.
 
-Evaluate the smallest workable option before adding infrastructure:
+Two runtime questions remain:
+
+1. validate that the packaged skill can execute its bundled Node resource across the intended DSH carriers;
+2. establish a reproducible scientific runtime for later R / Bioconductor analysis.
+
+For the scientific runtime, evaluate the smallest workable option before adding infrastructure:
 
 1. `renv.lock` plus any minimal Python lockfile;
 2. a pinned container if it integrates cleanly with the target DSH environment;
@@ -56,7 +61,7 @@ Do not create a `research-runtime` Cordis service merely to solve package versio
 
 The exact filenames are not locked yet, but v0 likely needs thin scripts for:
 
-- GDC manifest/query and download bookkeeping;
+- GDC manifest/query and download bookkeeping — **implemented in M1**;
 - expression/clinical preparation;
 - cohort QC;
 - CAPN1 expression summary;
