@@ -17,12 +17,8 @@ function fixture() {
     body,
     files: {
       data: { hits: [{
-        file_id: 'file-1',
-        file_name: 'sample.tsv',
-        file_size: body.length,
-        md5sum: 'd3894bb530e8effd8dd99eb9817c61dc',
-        data_format: 'TSV',
-        access: 'open',
+        file_id: 'file-1', file_name: 'sample.tsv', file_size: body.length,
+        md5sum: 'd3894bb530e8effd8dd99eb9817c61dc', data_format: 'TSV', access: 'open',
         analysis: { workflow_type: 'STAR - Counts' },
         cases: [{ case_id: 'case-1', submitter_id: 'TCGA-AB-0001' }],
       }] },
@@ -79,13 +75,10 @@ test('first acquisition downloads and second acquisition hits local cache withou
   assert.equal(calls.length, 3)
 
   const secondCalls = []
-  const second = await acquireSource({
-    workspace,
-    fetchImpl: async url => {
-      secondCalls.push(url)
-      throw new Error('network should not be used')
-    },
-  })
+  const second = await acquireSource({ workspace, fetchImpl: async url => {
+    secondCalls.push(url)
+    throw new Error('network should not be used')
+  } })
   assert.equal(second.status, 'cache-hit')
   assert.equal(secondCalls.length, 0)
   assert.equal((await stat(join(workspace, second.source.files[0].path))).size, fx.body.length)
@@ -98,11 +91,7 @@ test('explicit refresh re-queries but does not redownload an unchanged snapshot'
   await acquireSource({ workspace, fetchImpl: mockFetch(fx, []) })
 
   const calls = []
-  const refreshed = await acquireSource({
-    workspace,
-    refresh: true,
-    fetchImpl: mockFetch(fx, calls),
-  })
+  const refreshed = await acquireSource({ workspace, refresh: true, fetchImpl: mockFetch(fx, calls) })
   assert.equal(refreshed.status, 'refresh-unchanged')
   assert.equal(calls.length, 2)
   assert.ok(calls.every(url => !url.includes('/data/file-1')))
@@ -119,34 +108,26 @@ test('partial acquisition resumes from the saved manifest without re-querying GD
   const fx = fixture()
   const secondBody = Buffer.from('gene\tcount\nCAPN1\t20\n')
   fx.files.data.hits.push({
-    file_id: 'file-2',
-    file_name: 'sample-2.tsv',
-    file_size: secondBody.length,
-    md5sum: 'ef27b2f064cdd391033492a689c310eb',
-    data_format: 'TSV',
-    access: 'open',
+    file_id: 'file-2', file_name: 'sample-2.tsv', file_size: secondBody.length,
+    md5sum: 'ef27b2f064cdd391033492a689c310eb', data_format: 'TSV', access: 'open',
     analysis: { workflow_type: 'STAR - Counts' },
     cases: [{ case_id: 'case-1', submitter_id: 'TCGA-AB-0001' }],
   })
 
   await assert.rejects(acquireSource({
-    workspace,
-    concurrency: 1,
-    fetchImpl: async url => {
+    workspace, concurrency: 1, fetchImpl: async url => {
       if (String(url).includes('/files?')) return jsonResponse(fx.files)
       if (String(url).includes('/cases?')) return jsonResponse(fx.cases)
       if (String(url).endsWith('/data/file-1')) return new Response(fx.body, { status: 200 })
       throw new Error('simulated interrupted download')
     },
   }))
-  const partial = JSON.parse(await readFile(join(workspace, 'study/source.json'), 'utf8'))
+  const partial = JSON.parse(await readFile(join(workspace, 'study/source-pending.json'), 'utf8'))
   assert.equal(partial.status, 'partial')
 
   const calls = []
   const resumed = await acquireSource({
-    workspace,
-    concurrency: 1,
-    fetchImpl: async url => {
+    workspace, concurrency: 1, fetchImpl: async url => {
       calls.push(String(url))
       if (String(url).endsWith('/data/file-2')) return new Response(secondBody, { status: 200 })
       if (String(url).endsWith('/data/file-1')) return new Response(fx.body, { status: 200 })
@@ -155,4 +136,36 @@ test('partial acquisition resumes from the saved manifest without re-querying GD
   })
   assert.equal(resumed.status, 'resumed-complete')
   assert.ok(calls.every(url => url.includes('/data/')))
+})
+
+test('failed refresh preserves the previous complete active source', async () => {
+  const workspace = await mkdtemp(join(tmpdir(), 'capn1-refresh-fail-'))
+  await initializeWorkspace(workspace)
+  const fx = fixture()
+  const first = await acquireSource({ workspace, fetchImpl: mockFetch(fx, []) })
+  const activeBefore = JSON.parse(await readFile(join(workspace, 'study/source.json'), 'utf8'))
+
+  const changedBody = Buffer.from('gene\tcount\nCAPN1\t30\n')
+  const changed = fixture()
+  changed.files.data.hits[0] = {
+    ...changed.files.data.hits[0],
+    file_id: 'file-changed',
+    file_name: 'changed.tsv',
+    file_size: changedBody.length,
+    md5sum: 'ac59ea3ab9664e5387c280790224b1ee',
+  }
+  await assert.rejects(acquireSource({
+    workspace, refresh: true, fetchImpl: async url => {
+      if (String(url).includes('/files?')) return jsonResponse(changed.files)
+      if (String(url).includes('/cases?')) return jsonResponse(changed.cases)
+      throw new Error('simulated changed-source download failure')
+    },
+  }))
+
+  const activeAfter = JSON.parse(await readFile(join(workspace, 'study/source.json'), 'utf8'))
+  assert.equal(activeAfter.snapshot, activeBefore.snapshot)
+  assert.equal(activeAfter.snapshot, first.snapshot)
+  const pending = JSON.parse(await readFile(join(workspace, 'study/source-pending.json'), 'utf8'))
+  assert.equal(pending.status, 'partial')
+  assert.notEqual(pending.snapshot, activeAfter.snapshot)
 })
