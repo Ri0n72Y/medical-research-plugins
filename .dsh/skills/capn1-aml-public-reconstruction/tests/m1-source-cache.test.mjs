@@ -109,4 +109,50 @@ test('explicit refresh re-queries but does not redownload an unchanged snapshot'
 
   const source = JSON.parse(await readFile(join(workspace, 'study/source.json'), 'utf8'))
   assert.equal(source.status, 'complete')
+  const status = await readFile(join(workspace, 'study/status.md'), 'utf8')
+  assert.match(status, /re-queried/)
+})
+
+test('partial acquisition resumes from the saved manifest without re-querying GDC', async () => {
+  const workspace = await mkdtemp(join(tmpdir(), 'capn1-resume-'))
+  await initializeWorkspace(workspace)
+  const fx = fixture()
+  const secondBody = Buffer.from('gene\tcount\nCAPN1\t20\n')
+  fx.files.data.hits.push({
+    file_id: 'file-2',
+    file_name: 'sample-2.tsv',
+    file_size: secondBody.length,
+    md5sum: 'ef27b2f064cdd391033492a689c310eb',
+    data_format: 'TSV',
+    access: 'open',
+    analysis: { workflow_type: 'STAR - Counts' },
+    cases: [{ case_id: 'case-1', submitter_id: 'TCGA-AB-0001' }],
+  })
+
+  await assert.rejects(acquireSource({
+    workspace,
+    concurrency: 1,
+    fetchImpl: async url => {
+      if (String(url).includes('/files?')) return jsonResponse(fx.files)
+      if (String(url).includes('/cases?')) return jsonResponse(fx.cases)
+      if (String(url).endsWith('/data/file-1')) return new Response(fx.body, { status: 200 })
+      throw new Error('simulated interrupted download')
+    },
+  }))
+  const partial = JSON.parse(await readFile(join(workspace, 'study/source.json'), 'utf8'))
+  assert.equal(partial.status, 'partial')
+
+  const calls = []
+  const resumed = await acquireSource({
+    workspace,
+    concurrency: 1,
+    fetchImpl: async url => {
+      calls.push(String(url))
+      if (String(url).endsWith('/data/file-2')) return new Response(secondBody, { status: 200 })
+      if (String(url).endsWith('/data/file-1')) return new Response(fx.body, { status: 200 })
+      throw new Error(`resume must not re-query GDC: ${url}`)
+    },
+  })
+  assert.equal(resumed.status, 'resumed-complete')
+  assert.ok(calls.every(url => url.includes('/data/')))
 })
