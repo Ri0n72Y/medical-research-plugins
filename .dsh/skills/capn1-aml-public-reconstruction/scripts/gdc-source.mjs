@@ -50,7 +50,7 @@ async function writeStudyStatus(workspace, source, note) {
   const lines = [
     '# Study status', '',
     `- Source acquisition: ${source.status}.`,
-    `- Active source snapshot: ${source.snapshot}.`,
+    source.status === 'complete'\n      ? `- Active source snapshot: ${source.snapshot}.`\n      : `- Pending source snapshot: ${source.snapshot}.`,
     `- TCGA-LAML cases: ${source.cases ?? 'unknown'}.`,
     `- STAR - Counts files: ${source.files?.length ?? 0}.`,
     `- Source bytes: ${source.total_bytes ?? 'unknown'}.`,
