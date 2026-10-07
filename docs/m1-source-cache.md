@@ -87,7 +87,8 @@ A clinical-data change therefore produces a new source snapshot even if the expr
 
 ```text
 study/
-  source.json                    # active machine-readable source pointer/state
+  source.json                    # last completed active source
+  source-pending.json            # unfinished acquisition, only when present
   status.md                     # human-readable current source status
 
 data/
@@ -126,14 +127,17 @@ The first download or repair validates the GDC MD5 checksum before publishing a 
 
 ### Partial invocation
 
-The source state is written as `partial` before the expression transfer starts.
+Before expression transfer starts, the candidate source is written to `study/source-pending.json` as `partial`.
 
 If a transfer is interrupted:
 
-- already valid files remain in the snapshot;
-- the next normal invocation reads the saved manifest;
+- already valid files remain in the candidate snapshot;
+- the next acquisition continuation reads the saved pending manifest;
 - it resumes missing/invalid files;
-- it does not re-query GDC merely to resume the transfer.
+- it does not re-query GDC merely to resume the transfer;
+- an older completed `study/source.json`, when present, remains the active usable source.
+
+Only a fully validated candidate is published to `study/source.json`; successful publication removes `study/source-pending.json`.
 
 ### Explicit refresh
 
@@ -145,7 +149,9 @@ If the resulting fingerprint is unchanged and the active snapshot remains locall
 - record a refresh-check artifact;
 - do not re-download expression files.
 
-If the fingerprint changed, M1 creates/finishes the new snapshot and only then updates `study/source.json`.
+If the fingerprint changed, M1 creates/finishes the new snapshot under pending state and only then updates `study/source.json`.
+
+If the changed refresh fails, the previous completed active source is preserved. The unfinished candidate remains resumable in `study/source-pending.json`.
 
 Historical snapshot directories are not deleted.
 
@@ -185,7 +191,8 @@ They cover:
 - non-destructive workspace initialization;
 - first download followed by a network-free cache hit;
 - explicit refresh without redundant re-download when the source is unchanged;
-- interrupted acquisition followed by local-manifest resume.
+- interrupted acquisition followed by local-manifest resume;
+- failed changed-source refresh preserving the previous completed active source.
 
 Local validation command:
 
