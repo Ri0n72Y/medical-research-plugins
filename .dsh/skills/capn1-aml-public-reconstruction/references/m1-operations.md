@@ -33,19 +33,22 @@ Initialization is not permission to download data. Continue to source acquisitio
 
 ## Inspect source state
 
-Read `study/source.json` when present.
+Inspect both:
 
-A source is reusable only when its state is complete and its referenced manifest, clinical cache, and expression files are locally present.
+- `study/source.json` — the last completed active source;
+- `study/source-pending.json` — an incomplete acquisition, when one exists.
 
-If it is reusable:
+A completed active source is reusable only when its referenced manifest, clinical cache, and expression files are locally present.
 
-- tell the user that the local cached GDC source is being used;
-- do not query GDC;
-- continue from local data.
+For ordinary explain/show/continue-analysis requests, prefer the completed active source and disclose local cache use.
+
+A pending source does not invalidate or replace a completed active source.
+
+If the user's intent is to continue an interrupted acquisition, resume the pending source.
 
 ## Fresh acquisition
 
-When no compatible source exists, run the source resource without `--refresh`.
+When no compatible completed source exists and no resumable pending source exists, run the source resource without `--refresh`.
 
 Conceptually:
 
@@ -60,23 +63,27 @@ The script:
 3. computes a source fingerprint;
 4. creates a content-addressed source snapshot;
 5. saves the exact queries and GDC responses;
-6. writes `study/source.json` as partial;
+6. writes `study/source-pending.json` before expression transfer;
 7. streams expression files into the snapshot;
 8. validates each new/repair download against GDC byte size and MD5;
-9. marks the source complete only after all files validate;
-10. updates `study/status.md`.
+9. marks the snapshot complete only after all files validate;
+10. atomically publishes it as `study/source.json`;
+11. removes `study/source-pending.json`;
+12. updates `study/status.md`.
 
 For a long acquisition, use DSH's existing background-job support when available.
 
 ## Interrupted acquisition
 
-If `study/source.json` is `partial`, run the normal source command again without `--refresh`.
+If `study/source-pending.json` is partial and the user wants to continue acquisition, run the normal source command again without `--refresh`.
 
 It resumes from the saved manifest.
 
 Already valid local expression files are reused.
 
 It must not re-query GDC merely to resume a transfer.
+
+If a previous completed `study/source.json` also exists, it remains the usable active source until the pending snapshot fully completes.
 
 ## Explicit refresh
 
@@ -97,7 +104,12 @@ If the source fingerprint is unchanged and the active local snapshot is complete
 - return `refresh-unchanged`;
 - do not redownload expression files.
 
-If the fingerprint changed, finish a new snapshot before updating the active source pointer.
+If the fingerprint changed:
+
+- write the new acquisition to `study/source-pending.json`;
+- keep the previous completed `study/source.json` active during transfer;
+- publish the new source only after every file validates;
+- if refresh fails, preserve the previous completed active source.
 
 Do not delete old snapshot directories.
 
@@ -105,19 +117,19 @@ Do not delete old snapshot directories.
 
 ### `cache-hit`
 
-Local source reused. No GDC request occurred.
+Local completed source reused. No GDC request occurred.
 
 Tell the user explicitly.
 
 ### `downloaded`
 
-A new/needed source snapshot completed.
+A new/needed source snapshot completed and became active.
 
 Report the snapshot id, file count, and whether files were downloaded/reused.
 
 ### `resumed-complete`
 
-A partial source snapshot was resumed from its saved manifest and completed.
+A pending source snapshot was resumed from its saved manifest, completed, and became active.
 
 ### `refresh-unchanged`
 
@@ -125,7 +137,9 @@ GDC was queried because the user requested refresh, but the public source finger
 
 ## Source truth
 
-`study/source.json` is the machine-readable active source state.
+`study/source.json` is the machine-readable active **completed** source.
+
+`study/source-pending.json` is transient durable state for an unfinished acquisition.
 
 `study/status.md` is only the human-readable summary.
 
