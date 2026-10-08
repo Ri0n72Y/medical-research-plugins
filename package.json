@@ -1,0 +1,37 @@
+{
+  "name": "dsh-medical-research-skill-pack",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "DSH CAPN1/AML public reconstruction skill bundle and workspace runner",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "scripts": {
+    "doctor": "node scripts/cli.mjs doctor",
+    "deploy": "node scripts/cli.mjs deploy web",
+    "deploy:web": "node scripts/cli.mjs deploy web",
+    "deploy:headless": "node scripts/cli.mjs deploy headless",
+    "deploy:acp": "node scripts/cli.mjs deploy acp",
+    "web": "node scripts/cli.mjs web",
+    "prepare": "node scripts/cli.mjs prepare",
+    "headless:qc": "node scripts/cli.mjs headless",
+    "acp": "node scripts/cli.mjs acp",
+    "test": "node --test .dsh/skills/capn1-aml-public-reconstruction/tests/*.test.mjs scripts/*.test.mjs"
+  },
+  "files": [
+    "cordis.patch.yml",
+    ".dsh/skills",
+    "scripts/cli.mjs"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ri0n72Y/medical-research-plugins.git"
+  }
+}
