@@ -55,13 +55,15 @@ export async function prepare(workspace, { rerun = false, onProgress = () => {} 
   const activePath = join(workspace, 'study/processed.json')
   let previous
   try { previous = await loadJson(activePath) } catch (err) { if (err.code !== 'ENOENT') throw err }
-  if (!rerun && await cacheValid(workspace, previous, source.digest, scriptHash)) return { status: 'cache-hit', manifest: previous }
+  // A prior processed output is not a verified cache if its raw lineage has been damaged.
+  // Verify GDC source bytes before returning a completed processing cache hit.
   for (const file of source.files ?? []) {
     if (!file.file_id || !file.md5sum || !file.path || !file.file_size) throw Error('Invalid GDC source file manifest')
     const path = contained(workspace, file.path)
     if ((await stat(path)).size !== file.file_size || await hashFile(path, 'md5') !== file.md5sum) throw Error(`GDC raw integrity check failed: ${file.file_id}`)
   }
   if (!source.files?.length) throw Error('No expression files in GDC source')
+  if (!rerun && await cacheValid(workspace, previous, source.digest, scriptHash)) return { status: 'cache-hit', manifest: previous }
   const base = join(workspace, 'data/processed', source.snapshot)
   const id = `m2-${Date.now()}-${randomUUID().slice(0,8)}`
   const pending = join(base, `.pending-${id}`)
@@ -84,7 +86,9 @@ export async function prepare(workspace, { rerun = false, onProgress = () => {} 
       '', '## Issues', ...qc.issues.map(i => `- ${i.code} — ${i.subject}: ${i.detail}`), '']
     await appendFile(join(pending, 'qc.md'), lines.join('\n'), { flag: 'wx' })
     const artifactNames = expression.capn1_resolved ? [...outputs, 'capn1-expression.tsv'] : outputs
-    const manifest = { schema: 1, status: 'complete', implementation, id, source_snapshot: source.snapshot,
+    const manifest = { schema: 1, status: 'complete', implementation,
+      runtime: { node: process.version, platform: process.platform, arch: process.arch },
+      id, source_snapshot: source.snapshot,
       source_digest: source.digest, script_digest: scriptHash, clinical_input_sha256: await hashFile(clinicalPath),
       created_at: new Date().toISOString(), qc_status: qc.status, cohort_approved: false,
       outputs: await Promise.all(artifactNames.map(async name => {
