@@ -60,7 +60,6 @@ function requireTools(dryRun) {
   if (!report.npx) throw Error('npx missing; install Node.js with npm.')
   if (!report.pnpm) throw Error('pnpm missing; run: npm install -g pnpm@9.15.0')
 }
-
 const argsForDsh = args => ['--yes', dshPackage, ...args]
 async function launch(args, { cwd, dryRun = false } = {}) {
   if (dryRun) {
@@ -119,7 +118,6 @@ async function deploy(mode, options, { force = true } = {}) {
   }
   console.error(`Profile ${name}: deployment ${options.dryRun ? 'planned' : 'ready'}.`)
 }
-
 async function ensureWorkspace(workspace, dryRun) {
   if (dryRun) { console.error(`Workspace: ${workspace}`); return }
   await mkdir(workspace, { recursive: true })
@@ -153,7 +151,6 @@ async function prepareData(options) {
   console.log(`QC report: ${processed.manifest.outputs.find(x => x.path.endsWith('/qc.md'))?.path}`)
   console.log('Researcher QC review required. No cohort, OS endpoint or final paper report is approved.')
 }
-
 function help() {
   console.log(`CAPN1 / AML Research — DSH ${dshVersion}
 
@@ -166,7 +163,6 @@ node scripts/cli.mjs acp  Serve ACP JSON-RPC (stdout reserved)
 
 Options: --workspace <path>, --dry-run; prepare also: --refresh, --rerun`)
 }
-
 export async function main(argv = process.argv.slice(2)) {
   const opt = parseArgs(argv)
   if (opt.command === 'help') return help()
