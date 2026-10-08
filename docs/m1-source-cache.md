@@ -116,7 +116,7 @@ Paths stored inside manifests are workspace-relative and normalized to forward s
 
 ### Normal invocation
 
-If `study/source.json` says the source is complete and every expected expression file still exists with its expected byte size:
+If `study/source.json` says the source is complete and its manifest, clinical content digest and all expression file GDC MD5 checks pass:
 
 - return `cache-hit`;
 - make zero GDC requests;
@@ -132,10 +132,12 @@ Before expression transfer starts, the candidate source is written to `study/sou
 If a transfer is interrupted:
 
 - already valid files remain in the candidate snapshot;
-- the next acquisition continuation reads the saved pending manifest;
+- the next acquisition continuation reads the saved pending manifest; if a valid active source already exists, `--resume` explicitly selects pending instead of normal cache reuse;
 - it resumes missing/invalid files;
 - it does not re-query GDC merely to resume the transfer;
 - an older completed `study/source.json`, when present, remains the active usable source.
+
+The download layout is UUID-keyed (`expression/<file_id>/<original_filename>`) so identical original filenames cannot collide. GDC response pagination is checked for completeness before creating a snapshot.
 
 Only a fully validated candidate is published to `study/source.json`; successful publication removes `study/source-pending.json`.
 
@@ -192,7 +194,11 @@ They cover:
 - first download followed by a network-free cache hit;
 - explicit refresh without redundant re-download when the source is unchanged;
 - interrupted acquisition followed by local-manifest resume;
-- failed changed-source refresh preserving the previous completed active source.
+- failed changed-source refresh preserving the previous completed active source;
+- same-filename / different-file-ID downloads;
+- same-byte-length corruption rejection;
+- incomplete GDC metadata page rejection;
+- valid active source winning over pending unless `--resume` is explicit.
 
 Local validation command:
 
