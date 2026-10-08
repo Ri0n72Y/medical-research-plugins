@@ -1,140 +1,128 @@
 # Medical Research Plugins for DeepSeek Harness
 
-A DSH-native, human-in-the-loop research workflow reference implementation for medical researchers.
+A DSH-native, human-in-the-loop **CAPN1 / AML public research reconstruction**. Researchers own the scientific decisions; the Agent follows the skill, uses existing DSH tools, and reuses transparent datasets and results stored in the workspace.
 
-The project starts deliberately narrow: **reconstruct one real 2023 CAPN1 / acute myeloid leukemia (AML) public-data study end to end**, using public data and existing scientific software, and use that concrete workflow to show what an AI agent harness can and cannot do for biomedical research.
+This is deliberately a single-study reference implementation, not an autonomous scientist or a generic biomedical analysis platform.
 
-This repository is not an autonomous scientist and is not a general biomedical platform.
+## Quick start
 
-## Why this project exists
+**Prerequisites:** Git, **Node.js 22+** (includes npm and npx), **pnpm 9.15.x**, internet access for the first setup and GDC download. You do **not** need to globally install DSH. We pin and launch **`@deepseek-ai/dsh@0.2.0-rc.2`** via npx.
 
-Many medical supervisors are now expected to propose "smart medicine", AI, or other interdisciplinary projects without having an engineering model for where modern LLM agents actually fit.
+```sh
+# Install pnpm after installing Node.js
+npm install -g pnpm@9.15.0
 
-This project demonstrates a conservative answer:
+git clone https://github.com/Ri0n72Y/medical-research-plugins.git
+cd medical-research-plugins
 
-- the researcher owns the scientific question, method choices, and interpretation;
-- DSH provides the agent harness, workspace, tools, skills, approvals, questions, sessions, and execution substrate;
-- mature scientific tools perform the actual statistics and bioinformatics;
-- the agent coordinates repetitive work, handles large amounts of text and metadata, explains the workflow, and helps the researcher explore;
-- durable research state lives in the workspace, not in chat memory.
+npm run doctor
+npm run web
+```
 
-The first example is intentionally overfit to one study instead of prematurely designing a universal research framework.
+`npm run web` automatically:
 
-## Canonical v0 case
+1. initializes the `research-web` DSH profile **once**, using the shipped Web template;
+2. deploys this repository's thin research skill bundle into that profile if missing;
+3. creates `research-workspace/`, if needed;
+4. starts DSH Web from the workspace directory.
 
-**CAPN1 in AML — public reconstruction of the 2023 study led by Houcai Wang.**
+**The profile's original template is copied once, not live-inherited.** On later runs, existing profile data and settings are kept. The bundle uses the official DSH filesystem skill provider; no new Cordis research runtime is installed.
 
-The v0 workflow is expected to cover, where public information and public tooling allow:
+The terminal should print the Web URL. Open it and select the research workspace if the interface asks you to choose a directory. Starting DSH with that working directory provides a default workspace root, but does not guarantee the browser automatically switches to a previously selected session.
 
-1. reference and method mapping;
-2. TCGA-LAML public data acquisition;
-3. expression and clinical-data preparation;
-4. cohort QC;
-5. CAPN1 expression analysis;
-6. survival analysis;
-7. differential expression;
-8. GO / KEGG enrichment;
-9. STRING PPI analysis;
-10. immune analysis with public implementations or an explicit decision point;
-11. reconstruction report;
-12. optional post-reconstruction exploration.
+### Configure your model API key
 
-This is a **public reconstruction**, not a claim of bit-for-bit reproduction of the authors' original 2023 environment.
+For AI-assisted conversations you must configure a model provider. With the default DeepSeek route, use **`DEEPSEEK_API_KEY`** in the environment that launches DSH, or configure credentials through DSH's model/settings interface.
 
-## Core operating principles
+macOS/Linux:
 
-### Researcher owns the science
+```sh
+export DEEPSEEK_API_KEY='your-key'
+npm run web
+```
 
-AI may organize, execute approved steps, summarize evidence, and expose uncertainty. It must not silently choose scientific assumptions or promote correlation into mechanism.
+Windows PowerShell:
 
-### DSH owns the harness
+```powershell
+$env:DEEPSEEK_API_KEY = 'your-key'
+npm run web
+```
 
-Before adding project-specific infrastructure, reuse DSH's existing capabilities:
+Do not put credentials in `study/`, Git files, CLI arguments, screenshots, or `.env` files that might be committed. DSH's credential service can store keys for later use; the environment variable overrides the stored key for that launch. The **deterministic `npm run prepare` command does not need an LLM API key**.
 
-- workspace filesystem and containment;
-- read / write / edit tools;
-- shell execution and jobs;
-- user questions for scientific decisions;
-- approval for sensitive tool execution;
-- skills and packaged skill providers;
-- web search / fetch where appropriate;
-- MCP for suitable external scientific services;
-- subagents / workflows only where they genuinely help local orchestration.
+### One-command public data preparation
 
-### Workspace owns the research state
+```sh
+npm run prepare
+```
 
-Downloaded public data, normalized datasets, run manifests, scripts, decisions, figures, tables, references, notes, and reports stay in the workspace.
+This runs the *implemented* M1 + M2 workflow:
 
-Chat history is an interface, not the source of truth.
+- initialize workspace research files without overwriting researcher decisions;
+- acquire public TCGA-LAML GDC STAR Counts and clinical source (first run only);
+- validate and cache source files, then prepare separate counts/TPM matrices, clinical tables and QC;
+- reuse compatible complete local source and processed artifacts on future runs, explicitly announcing cache hits.
 
-### Cache first, refresh explicitly
+The first run may download many public expression files and take time/disk space; later compatible runs avoid refetching and reanalysis. Data are **not** committed to Git.
 
-After the first successful run:
+The result is a reviewable `qc.md` in `research-workspace/data/processed/...`, linked from `study/processed.json`. **This is an M2 QC report, not a completed CAPN1 publication-level reproduction.** No cohort selection, survival endpoint, clinical conclusion or scientific decision is automatically approved.
 
-1. inspect the workspace before fetching;
-2. reuse compatible local data before downloading;
-3. reuse compatible analysis artifacts before recomputing;
-4. explicitly tell the user when cached local results are being used;
-5. refresh only when the user asks to fetch again, use current data, or rerun an analysis;
-6. never overwrite prior completed research artifacts.
+Explicit operations:
 
-"Rerun the analysis" and "refetch the source data" are different operations.
+```sh
+# Requery public GDC and rebuild downstream data if source changes
+node scripts/cli.mjs prepare --refresh
 
-### Public gaps stay visible
+# Rerun processing with the existing GDC source cache
+node scripts/cli.mjs prepare --rerun
 
-Every workflow step is classified as one of:
+# Choose a different working directory (all study files remain there)
+node scripts/cli.mjs prepare --workspace /absolute/path/to/my-study
+node scripts/cli.mjs web --workspace /absolute/path/to/my-study
+```
 
-- **PUBLIC-FIXED** — public evidence is sufficient to define the step;
-- **RECONSTRUCTED** — the original implementation is unavailable, so a public reproducible substitute is declared;
-- **DECISION** — the choice can materially affect scientific interpretation and must return to the researcher;
-- **OPTIONAL** — useful context that is not required for the canonical reconstruction.
+On Windows, supply a Windows absolute path to `--workspace`.
 
-The agent must not guess across a DECISION boundary.
+## Optional non-GUI entrypoints
 
-### Canonical work and exploration do not silently mix
+The modes are **separate DSH profiles**, each derived from its corresponding official template. They are not switches on the Web profile.
 
-The canonical reconstruction stays traceable to its protocol and decisions.
+| Workflow | Command | Purpose |
+|---|---|---|
+| DSH Web (default) | `npm run web` | Interactive research discussions and review |
+| Deterministic local preparation | `npm run prepare` | M1/M2 source and QC cache without an AI model |
+| Headless Agent | `npm run headless:qc` | One-shot model-assisted explanation of **existing** cached QC |
+| ACP deployment | `npm run deploy:acp` | Initialize separate `research-acp` profile |
+| ACP server | `node scripts/cli.mjs acp` | JSON-RPC stdio for an external ACP client |
 
-Follow-up literature searches, alternative parameters, extra datasets, and speculative ideas may be explored, but they remain separate until the researcher explicitly promotes them into a new formal run.
+Headless uses a fresh Agent turn and is not a scientific-approval channel. Its default task deliberately **does not refetch or reanalyze**; if artifacts are missing, it reports that. It requires a model credential.
 
-## Intended deliverable
+ACP is a **protocol server**, not a one-shot script that writes a report by itself. You need an ACP-compatible client to issue its tasks. **Do not launch ACP via `npm run acp`**, because npm's own stdout may interfere with the ACP JSON-RPC stream; run the Node command above directly after deployment.
 
-The intended product is a **DSH plugin/skill pack**, not a standalone research application.
+See [Deployment and run modes](docs/deployment.md) for details, Windows steps, options, failure recovery and exact profile behavior.
 
-A user should be able to install it into a compatible DSH environment, open a workspace, invoke the CAPN1 skill, and reproduce or continue the workflow through ordinary interaction with the agent.
+## Architecture and capability boundary
 
-Most domain behavior should live in:
+- **DSH owns:** Agent/session, skills, workspace filesystem, tools, execution, approvals/questions, and optional MCP.
+- **The repository owns:** the CAPN1 skill, public-method map, thin GDC + QC scripts, analysis artifacts and provenance contracts.
+- **The researcher owns:** methods, cohort exclusion, endpoints, parameters that affect scientific interpretation, and final conclusions.
 
-- skills;
-- deterministic scripts;
-- public scientific APIs and packages;
-- workspace artifacts.
+Our initial pipeline is **public reconstruction**, not a bit-for-bit reproduction of unpublished 2023 data/parameters. Every stage is classified `PUBLIC-FIXED`, `RECONSTRUCTED`, `DECISION` or `OPTIONAL`. Exploration is separate from canonical results.
 
-New Cordis services or tools should exist only where DSH and mature community tooling leave a real capability gap.
+**Cache-first:** inspect before fetch; reuse before compute; announce cache use; refresh only on explicit request; preserve earlier completed runs.
 
-## Repository status
+The current source code is under `.dsh/skills/capn1-aml-public-reconstruction/`. The small `cordis.patch.yml` enables the existing DSH `skill-filesystem` provider to load that skill from the checked-out repository. **Keep the checkout in place after deploying this source-linked bundle**; if you move it, rerun deployment from the new location.
 
-Current phase: **M2 — expression / clinical processing + cohort QC**.
+## Status and tests
 
-The project now includes a DSH project-local skill at:
+Currently implemented: M0 architecture/skill baseline, M1 GDC source cache, M2 expression/clinical tables and QC; plus the DSH profile launcher/deploy wrapper. Statistical analysis, the full research report, and a distributable registry-published plugin remain later work.
 
-`.dsh/skills/capn1-aml-public-reconstruction/`
+```sh
+npm test
+node scripts/cli.mjs web --dry-run
+node scripts/cli.mjs prepare --dry-run
+```
 
-The skill is intentionally procedural rather than computational. It defines:
+Actual first-boot DSH profile deployment and full real GDC transfers require a connected target machine and **have not yet been verified in this repository's remote development environment**.
 
-- workspace-first and cache-first behavior;
-- canonical stage boundaries;
-- researcher decision ports;
-- public reconstruction vs. original-method distinctions;
-- DSH/native/public-tool reuse order;
-- minimal study and run-manifest templates.
-
-M1 now provides deterministic workspace initialization and public TCGA-LAML source acquisition. The GDC source is persisted as a content-addressed workspace snapshot, interrupted transfers resume from local manifests, normal reruns prefer local cache, and explicit refresh re-queries GDC without redownloading an unchanged snapshot.
-
-M2 now adds deterministic expression/clinical processing and an auditable cohort QC report. It preserves per-file GDC identities, separates raw counts from TPM, and **does not** approve a cohort or infer survival outcomes. Processed outputs use an independent cache and immutable run manifests.
-
-The next implementation layer is researcher-reviewed cohort selection and reproducible R/Bioconductor statistical analysis. A real GDC/DSH smoke remains necessary before calling the full pipeline operational.
-
-When this repository itself is opened as a DSH project workspace, the project-local skill path is already in DSH's normal skill discovery surface. The later distributable plugin/bundle should package the same skill rather than invent a second workflow definition.
-
-See [docs/architecture.md](docs/architecture.md) for the v0 architecture, [docs/m1-source-cache.md](docs/m1-source-cache.md) for M1, [docs/m2-processing-qc.md](docs/m2-processing-qc.md) for M2, and [AGENTS.md](AGENTS.md) for contributor and agent constraints.
+Read [architecture](docs/architecture.md), [M1](docs/m1-source-cache.md), [M2](docs/m2-processing-qc.md), and [AGENTS.md](AGENTS.md) before changing the workflow.
