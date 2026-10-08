@@ -2,7 +2,7 @@
 import { access, mkdir, readFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { spawn, spawnSync } from 'node:child_process'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -132,9 +132,9 @@ async function prepareData(options) {
     console.error(`Planned: init → GDC (${options.refresh ? 'explicit refresh' : 'cached'}) → M2 (${options.rerun ? 'explicit rerun' : 'cached'})`)
     return
   }
-  const { initializeWorkspace } = await import(join(skill, 'scripts/init-workspace.mjs'))
-  const { acquireSource } = await import(join(skill, 'scripts/gdc-source.mjs'))
-  const { prepare } = await import(join(skill, 'scripts/m2-prepare.mjs'))
+  const { initializeWorkspace } = await import(pathToFileURL(join(skill, 'scripts/init-workspace.mjs')).href)
+  const { acquireSource } = await import(pathToFileURL(join(skill, 'scripts/gdc-source.mjs')).href)
+  const { prepare } = await import(pathToFileURL(join(skill, 'scripts/m2-prepare.mjs')).href)
   const initialized = await initializeWorkspace(options.workspace)
   console.error(`Workspace: ${initialized.status}`)
   const source = await acquireSource({
