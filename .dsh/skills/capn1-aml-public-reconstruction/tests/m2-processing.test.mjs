@@ -53,6 +53,8 @@ test('M2 creates file-indexed count/TPM, full clinical observations, and non-app
  assert.equal(qc.survival_endpoint_defined,false)
  assert.ok(qc.issues.some(i=>i.code==='MULTIPLE_FILES_PER_CASE'))
  assert.match(await readFile(join(base,'clinical-diagnoses.tsv'),'utf8'),/days_to_last_follow_up/)
+ assert.ok(result.manifest.outputs.some(entry => entry.path.endsWith('/capn1-expression.tsv')))
+ assert.match(await readFile(join(base,'run-manifest.json'),'utf8'),/source_digest/)
 })
 test('compatible M2 cache hit avoids reprocessing; explicit rerun preserves previous', async()=>{
  const {workspace}=await fixture()
@@ -84,4 +86,13 @@ test('changed source digest invalidates cached processed result',async()=>{
  await writeFile(join(workspace,source.manifest),JSON.stringify(source))
  const next=await prepare(workspace)
  assert.notEqual(next.manifest.id,result.manifest.id)
+})
+
+test('failed rerun never replaces completed processed pointer',async()=>{
+ const {workspace,source}=await fixture()
+ const good=await prepare(workspace)
+ await writeFile(join(workspace,source.files[0].path),'tampered')
+ await assert.rejects(prepare(workspace,{rerun:true}),/integrity check failed/)
+ const active=JSON.parse(await readFile(join(workspace,'study/processed.json'),'utf8'))
+ assert.equal(active.id, good.manifest.id)
 })
