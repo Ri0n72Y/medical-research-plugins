@@ -95,11 +95,12 @@ For initialization, run the init resource only if `study/reconstruction.yaml` is
 For source acquisition, inspect both `study/source.json` and `study/source-pending.json`:
 
 - compatible completed `study/source.json` -> disclose cache use and reuse it for ordinary research work;
-- pending acquisition + user wants to continue acquisition -> run without `--refresh` to resume it;
+- pending acquisition + no valid active -> run normally to resume it;
+- pending acquisition + valid active -> reuse active by default; use `--resume` only if the user explicitly wants to finish the pending acquisition;
 - no completed or pending source -> run without `--refresh` to acquire public TCGA-LAML;
 - explicit refresh/latest request -> run with `--refresh`.
 
-A pending acquisition does not invalidate an older completed active source. A changed refresh becomes active only after the new snapshot fully validates.
+A valid active source is preferred over pending work; cache validity includes content checksums, not just file sizes. A pending acquisition does not invalidate an older completed active source. A changed refresh becomes active only after the new snapshot fully validates.
 
 Never add `--refresh` merely because a new chat/session began.
 
