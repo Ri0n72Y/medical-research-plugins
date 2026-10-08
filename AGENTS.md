@@ -29,7 +29,7 @@ Do not duplicate DSH workspace state, filesystem, shell execution, jobs, skills,
 
 ## Deployment and carrier boundaries
 
-The pinned DSH integration target is `@deepseek-ai/dsh@0.2.0-rc.2`. Source-linked deployment uses a thin `dsh.bundle` patch for the **existing** `skill-filesystem` provider. It is not permission to implement a new research runtime, Agent, or workspace registry.
+The pinned DSH integration target is `@deepseek-ai/dsh@0.2.0-rc.2`. Match its root toolchain: `pnpm@11.7.0` and Node.js `^22.19.0 || >=24.0.0`. Use `pnpm run` for scripts and `pnpm dlx` for invoking DSH; do not reintroduce mixed npm/npx setup instructions. Source-linked deployment uses a thin `dsh.bundle` patch for the **existing** `skill-filesystem` provider. It is not permission to implement a new research runtime, Agent, or workspace registry.
 
 The CLI creates `research-web` from the shipped Web template once. Optional `research-headless` and `research-acp` are initialized independently from their matching shipped templates. Do not treat a web-derived profile as a headless or ACP app.
 
