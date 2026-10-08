@@ -24,9 +24,20 @@ export async function buildClinicalTables(response, files, outDir, { capn1Resolv
       age_at_index: demographic.age_at_index, diagnosis_count: ds.length, followup_count: fs.length })
     if (!ds.length) issues.push({ code: 'NO_DIAGNOSIS', subject: c.case_id, detail: 'No diagnoses in GDC case metadata' })
     if (ds.length > 1) issues.push({ code: 'MULTIPLE_DIAGNOSES', subject: c.case_id, detail: `Diagnoses: ${ds.length}` })
-    if (!demographic.vital_status) issues.push({ code: 'MISSING_VITAL_STATUS', subject: c.case_id, detail: 'No demographic vital status' })
-    if (demographic.vital_status?.toLowerCase() === 'dead' && demographic.days_to_death == null) {
-      issues.push({ code: 'MISSING_DEATH_TIME', subject: c.case_id, detail: 'Dead but no days_to_death' })
+    const vital = String(demographic.vital_status ?? '').trim().toLowerCase()
+    if (!vital) issues.push({ code: 'MISSING_VITAL_STATUS', subject: c.case_id, detail: 'No demographic vital status' })
+    else if (vital !== 'alive' && vital !== 'dead') {
+      issues.push({ code: 'UNRESOLVED_VITAL_STATUS', subject: c.case_id, detail: `Vital status is ${demographic.vital_status}; not Alive/Dead` })
+    }
+    const hasDays = value => value !== null && value !== undefined && value !== '' &&
+      Number.isFinite(Number(value)) && Number(value) >= 0
+    if (vital === 'dead' && !hasDays(demographic.days_to_death)) {
+      issues.push({ code: 'MISSING_DEATH_TIME', subject: c.case_id, detail: 'Dead without a usable days_to_death' })
+    }
+    if (vital === 'alive' && !ds.some(d => hasDays(d.days_to_last_follow_up)) &&
+      !fs.some(f => hasDays(f.days_to_follow_up))) {
+      issues.push({ code: 'MISSING_CENSOR_FOLLOWUP', subject: c.case_id,
+        detail: 'Alive without a usable diagnosis/follow-up time; censor time remains undefined' })
     }
     for (const d of ds) diagnoses.push({ case_id: c.case_id, diagnosis_id: d.diagnosis_id, primary_diagnosis: d.primary_diagnosis,
       age_at_diagnosis: d.age_at_diagnosis, days_to_last_follow_up: d.days_to_last_follow_up,
