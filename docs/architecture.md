@@ -150,6 +150,8 @@ These names are descriptive, not yet a rigid schema.
 
 The important invariant is that formal research state does not depend on conversation memory.
 
+M2 additionally uses `study/processed.json` as the pointer to the last successful processed snapshot. Each processing run is kept under `data/processed/<source snapshot>/<run id>/` with immutable tables, QC and its own `run-manifest.json`. A changed source or script digest invalidates compatibility, but never deletes historical processed runs. Processing is not a researcher-approved cohort.
+
 ## 7. Cache-first execution contract
 
 The initialized workspace is also the project cache.
