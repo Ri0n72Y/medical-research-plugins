@@ -26,7 +26,7 @@ function contained(workspace, relativePath) {
 }
 async function loadJson(path) { return JSON.parse(await readFile(path, 'utf8')) }
 async function scriptDigest() {
-  const files = ['m2-prepare.mjs','m2-expression.mjs','m2-clinical.mjs']
+  const files = ['m2-prepare.mjs','m2-expression.mjs','m2-clinical.mjs','lib/gdc.mjs']
   const root = dirname(fileURLToPath(import.meta.url))
   const scripts = await Promise.all(files.map(async name => [name, await readFile(join(root, name), 'utf8')]))
   return shaText(JSON.stringify(scripts))
@@ -83,10 +83,11 @@ export async function prepare(workspace, { rerun = false, onProgress = () => {} 
       '', '**No files or cases were excluded.** Cohort and survival endpoint remain unapproved.',
       '', '## Issues', ...qc.issues.map(i => `- ${i.code} — ${i.subject}: ${i.detail}`), '']
     await appendFile(join(pending, 'qc.md'), lines.join('\n'), { flag: 'wx' })
+    const artifactNames = expression.capn1_resolved ? [...outputs, 'capn1-expression.tsv'] : outputs
     const manifest = { schema: 1, status: 'complete', implementation, id, source_snapshot: source.snapshot,
       source_digest: source.digest, script_digest: scriptHash, clinical_input_sha256: await hashFile(clinicalPath),
       created_at: new Date().toISOString(), qc_status: qc.status, cohort_approved: false,
-      outputs: await Promise.all(outputs.map(async name => {
+      outputs: await Promise.all(artifactNames.map(async name => {
         const path = join(pending, name)
         return { path: relative(workspace, join(published, name)).replaceAll('\\','/'), bytes: (await stat(path)).size, sha256: await hashFile(path) }
       })) }
