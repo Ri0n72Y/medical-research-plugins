@@ -6,20 +6,21 @@ This is deliberately a single-study reference implementation, not an autonomous 
 
 ## Quick start
 
-**Prerequisites:** Git, **Node.js 22+** (includes npm and npx), **pnpm 9.15.x**, internet access for the first setup and GDC download. You do **not** need to globally install DSH. We pin and launch **`@deepseek-ai/dsh@0.2.0-rc.2`** via npx.
+**Prerequisites:** Git, **Node.js 22.19+ (22.x) or 24+**, **pnpm 11.7.0**, and internet access for the first setup and GDC download. DSH does not need a global installation: the launcher uses **`pnpm dlx @deepseek-ai/dsh@0.2.0-rc.2`**.
 
 ```sh
-# Install pnpm after installing Node.js
-npm install -g pnpm@9.15.0
+# Enable the Node-bundled Corepack and activate DSH's exact pnpm version
+corepack enable
+corepack prepare pnpm@11.7.0 --activate
 
 git clone https://github.com/Ri0n72Y/medical-research-plugins.git
 cd medical-research-plugins
 
-npm run doctor
-npm run web
+pnpm run doctor
+pnpm run web
 ```
 
-`npm run web` automatically:
+`pnpm run web` automatically:
 
 1. initializes the `research-web` DSH profile **once**, using the shipped Web template;
 2. deploys this repository's thin research skill bundle into that profile if missing;
@@ -38,22 +39,22 @@ macOS/Linux:
 
 ```sh
 export DEEPSEEK_API_KEY='your-key'
-npm run web
+pnpm run web
 ```
 
 Windows PowerShell:
 
 ```powershell
 $env:DEEPSEEK_API_KEY = 'your-key'
-npm run web
+pnpm run web
 ```
 
-Do not put credentials in `study/`, Git files, CLI arguments, screenshots, or `.env` files that might be committed. DSH's credential service can store keys for later use; the environment variable overrides the stored key for that launch. The **deterministic `npm run prepare` command does not need an LLM API key**.
+Do not put credentials in `study/`, Git files, CLI arguments, screenshots, or `.env` files that might be committed. DSH's credential service can store keys for later use; the environment variable overrides the stored key for that launch. The **deterministic `pnpm run prepare` command does not need an LLM API key**.
 
 ### One-command public data preparation
 
 ```sh
-npm run prepare
+pnpm run prepare
 ```
 
 This runs the *implemented* M1 + M2 workflow:
@@ -89,15 +90,15 @@ The modes are **separate DSH profiles**, each derived from its corresponding off
 
 | Workflow | Command | Purpose |
 |---|---|---|
-| DSH Web (default) | `npm run web` | Interactive research discussions and review |
-| Deterministic local preparation | `npm run prepare` | M1/M2 source and QC cache without an AI model |
-| Headless Agent | `npm run headless:qc` | One-shot model-assisted explanation of **existing** cached QC |
-| ACP deployment | `npm run deploy:acp` | Initialize separate `research-acp` profile |
+| DSH Web (default) | `pnpm run web` | Interactive research discussions and review |
+| Deterministic local preparation | `pnpm run prepare` | M1/M2 source and QC cache without an AI model |
+| Headless Agent | `pnpm run headless:qc` | One-shot model-assisted explanation of **existing** cached QC |
+| ACP deployment | `pnpm run deploy:acp` | Initialize separate `research-acp` profile |
 | ACP server | `node scripts/cli.mjs acp` | JSON-RPC stdio for an external ACP client |
 
 Headless uses a fresh Agent turn and is not a scientific-approval channel. Its default task deliberately **does not refetch or reanalyze**; if artifacts are missing, it reports that. It requires a model credential.
 
-ACP is a **protocol server**, not a one-shot script that writes a report by itself. You need an ACP-compatible client to issue its tasks. **Do not launch ACP via `npm run acp`**, because npm's own stdout may interfere with the ACP JSON-RPC stream; run the Node command above directly after deployment.
+ACP is a **protocol server**, not a one-shot script that writes a report by itself. You need an ACP-compatible client to issue its tasks. **Do not launch ACP via `pnpm run acp`**, because package-manager banners may interfere with the ACP JSON-RPC stream; run the Node command above directly after deployment.
 
 See [Deployment and run modes](docs/deployment.md) for details, Windows steps, options, failure recovery and exact profile behavior.
 
@@ -118,7 +119,7 @@ The current source code is under `.dsh/skills/capn1-aml-public-reconstruction/`.
 Currently implemented: M0 architecture/skill baseline, M1 GDC source cache, M2 expression/clinical tables and QC; plus the DSH profile launcher/deploy wrapper. Statistical analysis, the full research report, and a distributable registry-published plugin remain later work.
 
 ```sh
-npm test
+pnpm test
 node scripts/cli.mjs web --dry-run
 node scripts/cli.mjs prepare --dry-run
 ```
