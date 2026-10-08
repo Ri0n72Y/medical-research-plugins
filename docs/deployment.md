@@ -1,31 +1,39 @@
 # Deployment and running modes (DSH 0.2.0-rc.2)
 
-This is the operational contract for the CAPN1 research skill pack. The current target is **source-checkout deployment**, not an npm-published standalone research application.
+This is the operational contract for the CAPN1 research skill pack. The current target is **source-checkout deployment**, not a registry-published standalone research application.
 
 ## 1. Install prerequisites
 
 You need:
 
-- Node.js 22+ (includes npm and npx; updating npm alone is not sufficient);
-- pnpm 9.15.x (DSH profile plugin manager forwards package operations to pnpm);
+- Node.js **22.19+ on Node 22, or Node 24+**, matching DSH's `^22.19.0 || >=24.0.0` engine range;
+- **pnpm 11.7.0**, matching DSH `0.2.0-rc.2`'s `packageManager` field;
 - Git for cloning this source repository;
-- outbound network for initial npm package installation and first GDC data acquisition;
+- outbound network for first-time pnpm/DSH package acquisition and GDC data download;
 - enough local storage for public per-sample STAR - Counts files;
 - an API credential for model-backed DSH sessions (not required for direct M1/M2 processing).
 
-Node check: `node --version`, `npm --version`.
+Version checks: `node --version`, `pnpm --version`.
 
-Install pnpm: `npm install -g pnpm@9.15.0`.
+On Node.js 22, enable bundled Corepack and activate DSH's pinned pnpm version:
 
-The CLI uses **`npx --yes @deepseek-ai/dsh@0.2.0-rc.2`**, not an unpinned `@latest` or global DSH. This is the integration baseline, not a promise that no newer version exists.
+```sh
+corepack enable
+corepack prepare pnpm@11.7.0 --activate
+pnpm --version
+```
+
+If Corepack is unavailable in your Node distribution (notably some installations of Node 25+), install Corepack separately first. The repository records `"packageManager": "pnpm@11.7.0"` and the launcher checks for that exact version.
+
+The CLI uses **`pnpm dlx @deepseek-ai/dsh@0.2.0-rc.2`**, not an unpinned `@latest` or global DSH. This is the integration baseline, not a promise that no newer version exists.
 
 ## 2. One-command Web launch
 
 From the cloned project root:
 
 ```sh
-npm run doctor
-npm run web
+pnpm run doctor
+pnpm run web
 ```
 
 The second command checks/creates the dedicated `research-web` profile, installs the local source bundle if needed, and starts DSH with `research-workspace/` as the invocation directory.
@@ -34,13 +42,13 @@ The second command checks/creates the dedicated `research-web` profile, installs
 
 ```sh
 # First creation only, using the shipped web template (does not boot the UI)
-npx --yes @deepseek-ai/dsh@0.2.0-rc.2 --profile research-web --from-default-profile web --dump-config
+pnpm dlx @deepseek-ai/dsh@0.2.0-rc.2 --profile research-web --from-default-profile web --dump-config
 
 # Install bundle into the research profile (DSH invokes pnpm)
-npx --yes @deepseek-ai/dsh@0.2.0-rc.2 plugin --profile research-web add /absolute/path/to/medical-research-plugins
+pnpm dlx @deepseek-ai/dsh@0.2.0-rc.2 plugin --profile research-web add /absolute/path/to/medical-research-plugins
 
 # Launch from the research workspace
-npx --yes @deepseek-ai/dsh@0.2.0-rc.2 --profile research-web
+pnpm dlx @deepseek-ai/dsh@0.2.0-rc.2 --profile research-web
 ```
 
 Do not blindly replay the first creation command once the profile exists: DSH rejects `--from-default-profile` against an existing profile. The wrapper checks for this.
@@ -84,7 +92,7 @@ medical-research-plugins/
 
 The data workspace is ignored by Git. The DSH model conversation is not the source of truth.
 
-`npm run prepare` performs deterministic M1+M2 data preparation:
+`pnpm run prepare` performs deterministic M1+M2 data preparation:
 
 - first time: source acquisition and QC processing;
 - subsequent compatible runs: verify and reuse local source and processed artifacts;
@@ -116,23 +124,23 @@ With the default DeepSeek provider, DSH can read `DEEPSEEK_API_KEY` at launch or
 macOS/Linux:
 ```sh
 export DEEPSEEK_API_KEY='your-api-key'
-npm run web
+pnpm run web
 ```
 
 Windows PowerShell:
 ```powershell
 $env:DEEPSEEK_API_KEY = 'your-api-key'
-npm run web
+pnpm run web
 ```
 
 Alternatively use the Web Models/credentials settings. Keep secrets outside the workspace and Git. Do not hardcode them into `cordis.patch.yml` or launch args.
 
-`npm run prepare` operates locally and accesses only public GDC. It does not request an LLM key.
+`pnpm run prepare` operates locally and accesses only public GDC. It does not request an LLM key.
 
 ## 5. Headless: a one-shot cached QC summary
 
 ```sh
-npm run headless:qc
+pnpm run headless:qc
 ```
 
 This automatically creates `research-headless` from DSH's shipped **headless** template on first use, installs the same bundle, and submits a bounded one-shot task in the research working directory.
@@ -144,13 +152,13 @@ Unlike deterministic `prepare`, this result is model-written narrative. The form
 ## 6. ACP: a persistent protocol connection
 
 ```sh
-npm run deploy:acp
+pnpm run deploy:acp
 node scripts/cli.mjs acp
 ```
 
 This creates `research-acp` from the shipped **ACP** profile and starts its stdio JSON-RPC server. You must connect an ACP-compatible client to drive sessions, prompts, and reports.
 
-ACP is **not** interchangeable with headless. Running the server alone will not submit a task or generate a report. ACP stdout is reserved for protocol frames: launch via `node scripts/cli.mjs acp`, **not `npm run acp`**, because npm may print non-protocol banners.
+ACP is **not** interchangeable with headless. Running the server alone will not submit a task or generate a report. ACP stdout is reserved for protocol frames: launch via `node scripts/cli.mjs acp`, **not `pnpm run acp`**, because a package-manager wrapper may print non-protocol banners.
 
 Web, headless and ACP are separately deployed configurations. Credentials and the workspace directory still need to be available to each mode.
 
@@ -159,7 +167,7 @@ Web, headless and ACP are separately deployed configurations. Credentials and th
 Without changing external state:
 
 ```sh
-npm test
+pnpm test
 node scripts/cli.mjs web --dry-run
 node scripts/cli.mjs prepare --dry-run
 node scripts/cli.mjs acp --dry-run
@@ -169,18 +177,18 @@ The `--dry-run` options describe orchestration only. They do not verify that DSH
 
 During a connected acceptance run, verify:
 
-1. `npm run doctor` reports Node/npm/npx/pnpm;
-2. `npm run deploy:web` creates a web-derived profile and registers the research bundle;
-3. `npm run web` starts without composition errors and exposes the CAPN1 skill in the selected workspace;
-4. `npm run prepare` retrieves public GDC and publishes `source.json`, `processed.json`, and `qc.md`;
-5. a second `npm run prepare` announces verified local source + processed cache reuse, with no GDC requests;
+1. `pnpm run doctor` reports the supported Node version and exact pnpm version;
+2. `pnpm run deploy:web` creates a web-derived profile and registers the research bundle;
+3. `pnpm run web` starts without composition errors and exposes the CAPN1 skill in the selected workspace;
+4. `pnpm run prepare` retrieves public GDC and publishes `source.json`, `processed.json`, and `qc.md`;
+5. a second `pnpm run prepare` announces verified local source + processed cache reuse, with no GDC requests;
 6. missing/corrupt data, interrupted fetches, and deliberate refresh/reanalysis retain previous completed artifacts;
 7. with a valid API key, headless can explain already cached QC;
 8. optional ACP handshake is driven by a real compatible client.
 
 If the package manager reports `pnpm` unavailable, install it explicitly. If a profile already exists and cannot be verified as template-derived, use a clean `DSH_HOME` instead of deleting unknown user data.
 
-**Known unverified boundaries:** actual npm profile deployment with this local bundle, real DSH skill recognition from the installed profile, real GDC data transfer, and ACP interoperability need target-host integration tests. The repository's dry-run tests alone do not establish these.
+**Known unverified boundaries:** actual pnpm-based profile deployment with this local bundle, real DSH skill recognition from the installed profile, real GDC data transfer, and ACP interoperability need target-host integration tests. The repository's dry-run tests alone do not establish these.
 
 Official DSH 0.2.0-rc.2 references:
 - [CLI/profile behavior](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.0-rc.2/apps/cli/reference/README.md)
