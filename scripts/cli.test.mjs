@@ -29,7 +29,7 @@ test('dry-run prepare neither starts a model session nor downloads', () => {
   const run = spawnSync(process.execPath, [cli, 'prepare', '--dry-run', '--refresh'], { encoding: 'utf8' })
   assert.equal(run.status, 0, run.stderr)
   assert.match(run.stderr, /explicit refresh/)
-  assert.doesNotMatch(run.stderr, /npx/)
+  assert.doesNotMatch(run.stderr, /(?:\\bnpx\\b|\\bnpm\\b)/)
 })
 
 test('ACP dry-run has a dedicated profile, not the Web entrypoint', () => {
