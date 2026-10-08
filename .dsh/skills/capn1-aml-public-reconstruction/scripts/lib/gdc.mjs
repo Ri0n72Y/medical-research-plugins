@@ -123,7 +123,7 @@ export function sourceDigest(files, clinical) {
 }
 
 export function safeFileName(name) {
-  if (!name || basename(name) !== name || name === '.' || name === '..') throw new Error(`unsafe GDC file name: ${name}`)
+  if (typeof name !== 'string' || !name || name.includes('\\\\') || basename(name) !== name || name === '.' || name === '..') throw new Error(`unsafe GDC file name: ${name}`)
   return name
 }
 
