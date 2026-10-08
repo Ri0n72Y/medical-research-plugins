@@ -5,6 +5,7 @@ import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { prepare } from '../scripts/m2-prepare.mjs'
+import { buildClinicalTables } from '../scripts/m2-clinical.mjs'
 import { clinicalDigest } from '../scripts/lib/gdc.mjs'
 const md5 = s => createHash('md5').update(s).digest('hex')
 const expression = genes => ['# gene-model: GENCODE v36','gene_id\tgene_name\tgene_type\tunstranded\tstranded_first\tstranded_second\ttpm_unstranded',
@@ -42,6 +43,7 @@ test('M2 creates file-indexed count/TPM, full clinical observations, and non-app
  const result=await prepare(workspace)
  assert.equal(result.status,'processed')
  assert.equal(result.manifest.qc_status,'requires-researcher-review')
+ assert.deepEqual(result.manifest.runtime, { node: process.version, platform: process.platform, arch: process.arch })
  const base=join(workspace,'data/processed/gdc-123456789abc',result.manifest.id)
  const counts=await readFile(join(base,'counts-unstranded.tsv'),'utf8')
  const tpm=await readFile(join(base,'tpm-unstranded.tsv'),'utf8')
@@ -95,4 +97,31 @@ test('failed rerun never replaces completed processed pointer',async()=>{
  await assert.rejects(prepare(workspace,{rerun:true}),/integrity check failed/)
  const active=JSON.parse(await readFile(join(workspace,'study/processed.json'),'utf8'))
  assert.equal(active.id, good.manifest.id)
+})
+
+test('cached M2 processing refuses same-length raw-source corruption', async () => {
+  const { workspace, source } = await fixture()
+  const firstResult = await prepare(workspace)
+  assert.equal(firstResult.status, 'processed')
+  const inputPath = join(workspace, source.files[0].path)
+  const original = await readFile(inputPath, 'utf8')
+  await writeFile(inputPath, original.replace('\t10\t0\t', '\t90\t0\t'))
+  await assert.rejects(prepare(workspace), /GDC raw integrity check failed/)
+  const active = JSON.parse(await readFile(join(workspace, 'study/processed.json'), 'utf8'))
+  assert.equal(active.id, firstResult.manifest.id)
+})
+
+test('QC flags unknown vital status and missing censor follow-up without deciding OS', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'm2-vital-qc-'))
+  const cases = { data: { hits: [
+    { case_id: 'unknown', demographic: { vital_status: 'Not Reported' }, diagnoses: [] },
+    { case_id: 'alive-missing', demographic: { vital_status: 'Alive' }, diagnoses: [{ diagnosis_id: 'd1' }] },
+    { case_id: 'alive-valid', demographic: { vital_status: 'Alive' }, diagnoses: [{ days_to_last_follow_up: 20 }] },
+  ] } }
+  const qc = await buildClinicalTables(cases, [], directory)
+  assert.ok(qc.issues.some(issue => issue.subject === 'unknown' && issue.code === 'UNRESOLVED_VITAL_STATUS'))
+  assert.ok(qc.issues.some(issue => issue.subject === 'alive-missing' && issue.code === 'MISSING_CENSOR_FOLLOWUP'))
+  assert.ok(!qc.issues.some(issue => issue.subject === 'alive-valid' && issue.code === 'MISSING_CENSOR_FOLLOWUP'))
+  assert.equal(qc.endpoint_defined, false)
+  assert.equal(qc.sample_selection_defined, false)
 })
