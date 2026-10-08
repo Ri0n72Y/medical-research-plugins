@@ -59,7 +59,7 @@ The agent coordinates and explains. Scientific software computes. The workspace 
 
 ## 3.1. Source-linked deployment and run modes
 
-The first usable entrypoint is a source checkout plus a thin DSH bundle that configures the existing `skill-filesystem` provider. `scripts/cli.mjs` pins `@deepseek-ai/dsh@0.2.0-rc.2`, creates a `research-web` profile **once** from the shipped `web` template, deploys the bundle, and boots from the selected study directory.
+The first usable entrypoint is a source checkout plus a thin DSH bundle that configures the existing `skill-filesystem` provider. `scripts/cli.mjs` invokes pinned `@deepseek-ai/dsh@0.2.0-rc.2` via `pnpm dlx`, using the DSH-matched `pnpm@11.7.0` toolchain, creates a `research-web` profile **once** from the shipped `web` template, deploys the bundle, and boots from the selected study directory.
 
 The separate headless and ACP profiles must come from the shipped `headless` and `acp` templates respectively. Headless is one task; ACP is a stdio protocol service requiring an external client. Neither is an alias for the Web profile.
 
