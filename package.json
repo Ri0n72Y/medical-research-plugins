@@ -29,7 +29,6 @@
     ".dsh/skills",
     "scripts/cli.mjs"
   ],
-  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Ri0n72Y/medical-research-plugins.git"
