@@ -106,15 +106,15 @@ Only **QC** reports are currently supported. The full survival/GO/KEGG/STRING/im
 To use a custom workspace:
 
 ```sh
-node scripts/cli.mjs prepare --workspace /absolute/path/to/study
-node scripts/cli.mjs web --workspace /absolute/path/to/study
+pnpm run prepare --workspace /absolute/path/to/study
+pnpm run web --workspace /absolute/path/to/study
 ```
 
 PowerShell example:
 
 ```powershell
-node scripts/cli.mjs prepare --workspace 'D:\\MedicalResearch\\CAPN1'
-node scripts/cli.mjs web --workspace 'D:\\MedicalResearch\\CAPN1'
+pnpm run prepare --workspace 'D:\\MedicalResearch\\CAPN1'
+pnpm run web --workspace 'D:\\MedicalResearch\\CAPN1'
 ```
 
 ## 4. Provider credentials
@@ -168,9 +168,9 @@ Without changing external state:
 
 ```sh
 pnpm test
-node scripts/cli.mjs web --dry-run
-node scripts/cli.mjs prepare --dry-run
-node scripts/cli.mjs acp --dry-run
+pnpm run web --dry-run
+pnpm run prepare --dry-run
+pnpm run deploy:acp --dry-run
 ```
 
 The `--dry-run` options describe orchestration only. They do not verify that DSH downloaded successfully or that GDC is reachable.
