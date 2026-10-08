@@ -21,6 +21,8 @@ test('dry-run Web creates a web-based profile and pins DSH', () => {
   assert.equal(run.status, 0, run.stderr)
   assert.match(run.stderr, /--from-default-profile.*web/)
   assert.match(run.stderr, /@deepseek-ai\/dsh@0\.2\.0-rc\.2/)
+  assert.match(run.stderr, /pnpm/)
+  assert.match(run.stderr, /dlx/)
   assert.match(run.stderr, /research-web/)
   assert.doesNotMatch(run.stderr, /research-headless/)
 })
