@@ -46,27 +46,27 @@ function commandVersion(name) {
 
 export function prerequisiteReport() {
   return {
-    node: process.version, npm: commandVersion('npm'),
-    npx: commandVersion('npx'), pnpm: commandVersion('pnpm'),
+    node: process.version, pnpm: commandVersion('pnpm'),
   }
 }
 
 function requireTools(dryRun) {
-  if (Number(process.versions.node.split('.')[0]) < 22) {
-    throw Error('Node.js >=22 required; install Node LTS first.')
+  const [major, minor] = process.versions.node.split('.').map(Number)
+  if (!(major === 22 && minor >= 19) && major < 24) {
+    throw Error('DSH rc.2 requires Node.js ^22.19.0 or >=24.0.0.')
   }
   if (dryRun) return
   const report = prerequisiteReport()
-  if (!report.npx) throw Error('npx missing; install Node.js with npm.')
-  if (!report.pnpm) throw Error('pnpm missing; run: npm install -g pnpm@9.15.0')
+  if (!report.pnpm) throw Error('pnpm missing; run: corepack enable && corepack prepare pnpm@11.7.0 --activate')
+  if (report.pnpm !== '11.7.0') throw Error(`This project uses pnpm 11.7.0; detected ${report.pnpm}.`)
 }
-const argsForDsh = args => ['--yes', dshPackage, ...args]
+const argsForDsh = args => ['dlx', dshPackage, ...args]
 async function launch(args, { cwd, dryRun = false } = {}) {
   if (dryRun) {
-    console.error(`$ (cd ${JSON.stringify(cwd)} && npx ${argsForDsh(args).map(JSON.stringify).join(' ')})`)
+    console.error(`$ (cd ${JSON.stringify(cwd)} && pnpm ${argsForDsh(args).map(JSON.stringify).join(' ')})`)
     return
   }
-  const bin = process.platform === 'win32' ? 'npx.cmd' : 'npx'
+  const bin = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm'
   const env = {
     ...process.env, DSH_MED_RESEARCH_SKILL_ROOT: join(root, '.dsh/skills'),
   }
@@ -154,11 +154,11 @@ async function prepareData(options) {
 function help() {
   console.log(`CAPN1 / AML Research — DSH ${dshVersion}
 
-npm run doctor            Check Node/npm/npx/pnpm
-npm run web               Deploy research-web as needed and launch DSH Web
-npm run prepare           Download/cache public GDC data and write M2 QC
-npm run headless:qc       Generate an AI-assisted summary from cached QC
-npm run deploy:acp        Deploy the separate ACP profile
+pnpm run doctor           Check Node/pnpm
+pnpm run web              Deploy research-web as needed and launch DSH Web
+pnpm run prepare          Download/cache public GDC data and write M2 QC
+pnpm run headless:qc      Generate an AI-assisted summary from cached QC
+pnpm run deploy:acp       Deploy the separate ACP profile
 node scripts/cli.mjs acp  Serve ACP JSON-RPC (stdout reserved)
 
 Options: --workspace <path>, --dry-run; prepare also: --refresh, --rerun`)
@@ -185,7 +185,7 @@ export async function main(argv = process.argv.slice(2)) {
   if (opt.command === 'acp') {
     requireTools(opt.dryRun)
     if (!opt.dryRun && !await profileExists(profiles.acp, 'acp')) {
-      throw Error('ACP profile missing; run npm run deploy:acp first.')
+      throw Error('ACP profile missing; run pnpm run deploy:acp first.')
     }
     await ensureWorkspace(opt.workspace, opt.dryRun)
     return launch(['--profile', profiles.acp], { cwd: opt.workspace, dryRun: opt.dryRun })
