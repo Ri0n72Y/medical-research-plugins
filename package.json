@@ -5,7 +5,8 @@
   "type": "module",
   "description": "DSH CAPN1/AML public reconstruction skill bundle and workspace runner",
   "engines": {
-    "node": ">=22.0.0"
+    "node": "^22.19.0 || >=24.0.0",
+    "pnpm": "11.7.0"
   },
   "dsh": {
     "bundle": {
@@ -32,5 +33,6 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Ri0n72Y/medical-research-plugins.git"
-  }
+  },
+  "packageManager": "pnpm@11.7.0"
 }
