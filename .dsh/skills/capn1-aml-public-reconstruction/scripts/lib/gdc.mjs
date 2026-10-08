@@ -3,7 +3,7 @@ import { mkdir, rename, rm, stat } from 'node:fs/promises'
 import { createWriteStream } from 'node:fs'
 import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
-import { fastFileMatches, fileExists, md5File, sha256Text, stableJson } from './io.mjs'
+import { fastFileMatches, md5File, readJson, sha256Text, stableJson } from './io.mjs'
 
 export const GDC_API = 'https://api.gdc.cancer.gov'
 export const PROJECT_ID = 'TCGA-LAML'
@@ -57,9 +57,35 @@ export async function fetchJson(url, fetchImpl = fetch) {
   return response.json()
 }
 
+export function assertCompletePage(response, label) {
+  const hits = response?.data?.hits
+  const total = Number(response?.data?.pagination?.total)
+  if (!Array.isArray(hits) || !Number.isSafeInteger(total) || total < 0 || hits.length !== total) {
+    throw new Error(`Incomplete GDC ${label} response: received ${hits?.length ?? 'unknown'} of ${response?.data?.pagination?.total ?? 'unknown'}`)
+  }
+}
+
+export function safeFileId(id) {
+  if (typeof id !== 'string' || !/^[A-Za-z0-9_-]+$/.test(id) || id === '.' || id === '..') {
+    throw new Error(`unsafe GDC file ID: ${id}`)
+  }
+  return id
+}
+
 export function normalizeFiles(response) {
+  assertCompletePage(response, 'files')
   const hits = response?.data?.hits
   if (!Array.isArray(hits) || hits.length === 0) throw new Error('GDC returned no STAR - Counts files for TCGA-LAML')
+  const seen = new Set()
+  for (const hit of hits) {
+    safeFileId(hit.file_id)
+    safeFileName(hit.file_name)
+    if (seen.has(hit.file_id)) throw new Error(`Duplicate GDC file ID: ${hit.file_id}`)
+    seen.add(hit.file_id)
+    if (!Number.isSafeInteger(Number(hit.file_size)) || Number(hit.file_size) <= 0 || !/^[0-9a-f]{32}$/i.test(hit.md5sum ?? '')) {
+      throw new Error(`Invalid GDC size or MD5 for ${hit.file_id}`)
+    }
+  }
   return hits.map(hit => ({
     file_id: hit.file_id,
     file_name: hit.file_name,
@@ -74,6 +100,7 @@ export function normalizeFiles(response) {
 }
 
 export function caseIds(response) {
+  assertCompletePage(response, 'cases')
   const hits = response?.data?.hits
   if (!Array.isArray(hits) || hits.length === 0) throw new Error('GDC returned no cases for TCGA-LAML')
   return hits.map(hit => ({ case_id: hit.case_id, submitter_id: hit.submitter_id }))
@@ -101,20 +128,28 @@ export function safeFileName(name) {
 }
 
 export async function snapshotIsComplete(workspace, sourceState) {
-  if (!sourceState || sourceState.status !== 'complete' || !Array.isArray(sourceState.files)) return false
-  if (!sourceState.manifest || !await fileExists(join(workspace, sourceState.manifest))) return false
-  if (!sourceState.clinical || !await fileExists(join(workspace, sourceState.clinical))) return false
-  for (const file of sourceState.files) {
-    const path = join(workspace, file.path)
-    if (!(await fastFileMatches(path, file.file_size))) return false
+  if (!sourceState || sourceState.status !== 'complete' || !Array.isArray(sourceState.files) || !sourceState.files.length) return false
+  try {
+    const manifest = await readJson(join(workspace, sourceState.manifest))
+    if (manifest.status !== 'complete' || manifest.digest !== sourceState.digest || manifest.snapshot !== sourceState.snapshot) return false
+    const clinical = await readJson(join(workspace, sourceState.clinical))
+    if (clinicalDigest(clinical) !== sourceState.clinical_digest) return false
+    for (const file of sourceState.files) {
+      safeFileId(file.file_id)
+      if (!(await fastFileMatches(join(workspace, file.path), file.file_size))) return false
+      if ((await md5File(join(workspace, file.path))).toLowerCase() !== file.md5sum.toLowerCase()) return false
+    }
+    return true
+  } catch {
+    return false
   }
-  return true
 }
 
 export async function downloadExpressionFile(file, targetDir, fetchImpl = fetch) {
   safeFileName(file.file_name)
   await mkdir(targetDir, { recursive: true })
-  const target = join(targetDir, file.file_name)
+  const target = join(targetDir, safeFileId(file.file_id), file.file_name)
+  await mkdir(join(targetDir, file.file_id), { recursive: true })
   if (await fastFileMatches(target, file.file_size)) {
     const md5 = await md5File(target)
     if (md5 === file.md5sum) return { reused: true, path: target }
