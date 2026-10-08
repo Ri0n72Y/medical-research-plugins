@@ -19,7 +19,7 @@ The source remains the raw research record. M2 derives inspectable tables withou
 
 The current M1 file manifest maps expression **files to cases**, not reliably to individual biospecimen/sample identities. Each expression column therefore uses its **GDC file UUID**, not an invented sample ID.
 
-M2 verifies source presence, expression file byte sizes and GDC MD5 values, and the clinical source digest before processing.
+M2 verifies source presence, expression file byte sizes and GDC MD5 values, and the clinical source digest **before processing or claiming a processed-cache hit**. This preserves the distinction between an intact cached result and verifiable raw lineage.
 
 ## Outputs
 
@@ -46,7 +46,7 @@ The pipeline **does not** derive OS time or censoring status automatically. In G
 
 M2 never selects a representative file among multiple expression files mapped to one case. It reports `MULTIPLE_FILES_PER_CASE`. Other QC issues include missing vital status, missing death time, missing/multiple diagnoses, ambiguous file-to-case mapping, unmatched case IDs, and ambiguous CAPN1 annotation.
 
-These are **QC observations**, not automatic case exclusions. The output is marked `requires-researcher-review`, with `cohort_approved=false` and `survival_endpoint_defined=false`.
+Additional descriptive warnings cover non-actionable vital status (for example `Not Reported`) and `Alive` cases with no usable diagnosis/follow-up censor time. These are **QC observations**, not automatic case exclusions. The output is marked `requires-researcher-review`, with `cohort_approved=false` and `survival_endpoint_defined=false`.
 
 ## Cache and reprocessing
 
@@ -58,6 +58,8 @@ node <skill-resource>/scripts/m2-prepare.mjs --workspace <workspace> --rerun
 Default behavior: if source digest, processing script digest, all output files and their SHA-256 digests match, return `cache-hit`. No fresh processing, no GDC fetch.
 
 `--rerun` is reserved for an explicit user request to redo processing; it creates a new run from cached source data. It never means refetch GDC. A new GDC source becomes a different processing input and cannot use a stale matrix.
+
+The manifest also records the Node version, platform, and CPU architecture used for processing.
 
 Output files are first written to a private staging directory and published only after successful processing; the active pointer is atomically replaced afterward. Earlier completed directories remain intact.
 
@@ -79,7 +81,7 @@ Use Node's built-in test runner:
 node --test .dsh/skills/capn1-aml-public-reconstruction/tests/m2-processing.test.mjs
 ```
 
-The mocked-fixture tests cover file-indexed raw/TPM outputs, clinical and QC preservation, cache reuse, explicit reprocessing, source change invalidation, corrupted input, mismatched gene order, and failed-rerun pointer preservation.
+The mocked-fixture tests cover file-indexed raw/TPM outputs, clinical and QC preservation, cache reuse, explicit reprocessing, source change invalidation, corrupted input, mismatched gene order, failed-rerun pointer preservation, post-processing raw source corruption, and missing censor follow-up / unknown vital status.
 
 A complete **real GDC + DSH** smoke has not yet been established; M1/M2 public source compatibility must be verified in the target environment. M2 does not claim medical or statistical validation of the cohort.
 
