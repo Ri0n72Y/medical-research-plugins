@@ -72,14 +72,14 @@ Explicit operations:
 
 ```sh
 # Requery public GDC and rebuild downstream data if source changes
-node scripts/cli.mjs prepare --refresh
+pnpm run prepare --refresh
 
 # Rerun processing with the existing GDC source cache
-node scripts/cli.mjs prepare --rerun
+pnpm run prepare --rerun
 
 # Choose a different working directory (all study files remain there)
-node scripts/cli.mjs prepare --workspace /absolute/path/to/my-study
-node scripts/cli.mjs web --workspace /absolute/path/to/my-study
+pnpm run prepare --workspace /absolute/path/to/my-study
+pnpm run web --workspace /absolute/path/to/my-study
 ```
 
 On Windows, supply a Windows absolute path to `--workspace`.
@@ -120,8 +120,8 @@ Currently implemented: M0 architecture/skill baseline, M1 GDC source cache, M2 e
 
 ```sh
 pnpm test
-node scripts/cli.mjs web --dry-run
-node scripts/cli.mjs prepare --dry-run
+pnpm run web --dry-run
+pnpm run prepare --dry-run
 ```
 
 Actual first-boot DSH profile deployment and full real GDC transfers require a connected target machine and **have not yet been verified in this repository's remote development environment**.
