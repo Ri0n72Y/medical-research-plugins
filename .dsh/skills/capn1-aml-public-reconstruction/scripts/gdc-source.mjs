@@ -6,14 +6,16 @@ import { caseIds, casesUrl, clinicalDigest, downloadExpressionFile, fetchJson, f
 import { readJsonIfExists, writeJsonAtomic, writeTextAtomic } from './lib/io.mjs'
 
 export function parseArgs(argv) {
-  const result = { workspace: process.cwd(), refresh: false, concurrency: 4 }
+  const result = { workspace: process.cwd(), refresh: false, resume: false, concurrency: 4 }
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i]
     if (arg === '--workspace') result.workspace = argv[++i]
     else if (arg === '--refresh') result.refresh = true
+    else if (arg === '--resume') result.resume = true
     else if (arg === '--concurrency') result.concurrency = Number(argv[++i])
     else throw new Error(`unknown argument: ${arg}`)
   }
+  if (result.refresh && result.resume) throw new Error('--refresh and --resume cannot be combined')
   if (!Number.isInteger(result.concurrency) || result.concurrency < 1 || result.concurrency > 16) {
     throw new Error('--concurrency must be an integer from 1 to 16')
   }
@@ -67,13 +69,16 @@ async function recordRefreshCheck(workspace, payload) {
   await writeJsonAtomic(path, payload)
 }
 
-export async function acquireSource({ workspace, refresh = false, concurrency = 4, fetchImpl = fetch, onProgress = () => {} }) {
+export async function acquireSource({ workspace, refresh = false, resume = false, concurrency = 4, fetchImpl = fetch, onProgress = () => {} }) {
   const statePath = join(workspace, 'study/source.json')
   const pendingPath = join(workspace, 'study/source-pending.json')
   const active = await readJsonIfExists(statePath)
   const pending = await readJsonIfExists(pendingPath)
 
-  if (!refresh && pending?.status === 'partial' && Array.isArray(pending.files)) {
+  if (refresh && resume) throw new Error('--refresh and --resume cannot be combined')
+  const resumable = pending?.status === 'partial' && Array.isArray(pending.files) && pending.files.length > 0
+  if (resume && !resumable) throw new Error('No pending source acquisition to resume')
+  if (resume && resumable) {
     onProgress({ phase: 'resume', snapshot: pending.snapshot, files: pending.files.length })
     return finishSnapshot({ workspace, statePath, pendingPath, source: pending, concurrency, fetchImpl, resumed: true, onProgress })
   }
@@ -81,6 +86,11 @@ export async function acquireSource({ workspace, refresh = false, concurrency = 
   if (!refresh && await snapshotIsComplete(workspace, active)) {
     await writeStudyStatus(workspace, active, 'local cached source reused; no GDC request was made')
     return { status: 'cache-hit', snapshot: active.snapshot, files: active.files.length, source: active }
+  }
+
+  if (!refresh && resumable) {
+    onProgress({ phase: 'resume', snapshot: pending.snapshot, files: pending.files.length })
+    return finishSnapshot({ workspace, statePath, pendingPath, source: pending, concurrency, fetchImpl, resumed: true, onProgress })
   }
 
   const queryStartedAt = nowIso()
@@ -127,7 +137,7 @@ export async function acquireSource({ workspace, refresh = false, concurrency = 
     cases: cases.length,
     clinical_digest: clinical,
     total_bytes: totalBytes,
-    files: files.map(file => ({ ...file, path: workspacePath(workspace, join(rawRoot, 'expression', file.file_name)) })),
+    files: files.map(file => ({ ...file, path: workspacePath(workspace, join(rawRoot, 'expression', file.file_id, file.file_name)) })),
   }
   await writeJsonAtomic(join(manifestDir, 'source-manifest.json'), source)
   await writeJsonAtomic(pendingPath, source)

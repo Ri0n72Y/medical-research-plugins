@@ -38,11 +38,11 @@ Inspect both:
 - `study/source.json` — the last completed active source;
 - `study/source-pending.json` — an incomplete acquisition, when one exists.
 
-A completed active source is reusable only when its referenced manifest, clinical cache, and expression files are locally present.
+A completed active source is reusable only when its manifest matches, clinical content digest matches, and **every expression file MD5** matches GDC metadata. Revalidation reads cached files but makes no network request.
 
 For ordinary explain/show/continue-analysis requests, prefer the completed active source and disclose local cache use.
 
-A pending source does not invalidate or replace a completed active source.
+A pending source does not invalidate or replace a completed active source. The normal source command prefers the verified active cache; with both present, use `--resume` only after an explicit request to finish the pending acquisition.
 
 If the user's intent is to continue an interrupted acquisition, resume the pending source.
 
@@ -55,6 +55,8 @@ Conceptually:
 ```text
 node <resolved gdc-source.mjs> --workspace <current workspace>
 ```
+
+The GDC result pages must be complete (`data.pagination.total` equals returned hits); an incomplete page fails visibly instead of producing a partial cohort.
 
 The script:
 
@@ -75,7 +77,7 @@ For a long acquisition, use DSH's existing background-job support when available
 
 ## Interrupted acquisition
 
-If `study/source-pending.json` is partial and the user wants to continue acquisition, run the normal source command again without `--refresh`.
+If `study/source-pending.json` is partial and the user wants to continue acquisition, use `--resume` when an active complete source also exists. Without an active complete source the normal command resumes automatically.
 
 It resumes from the saved manifest.
 

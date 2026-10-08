@@ -1,14 +1,17 @@
 import assert from 'node:assert/strict'
-import { mkdtemp, readFile, stat } from 'node:fs/promises'
+import { mkdtemp, readFile, stat, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
 import { initializeWorkspace } from '../scripts/init-workspace.mjs'
 import { acquireSource } from '../scripts/gdc-source.mjs'
-import { casesUrl, clinicalDigest, fileFilters, filesUrl, sourceDigest } from '../scripts/lib/gdc.mjs'
+import { casesUrl, clinicalDigest, fileFilters, filesUrl, sourceDigest, snapshotIsComplete } from '../scripts/lib/gdc.mjs'
 
 function jsonResponse(value) {
-  return new Response(JSON.stringify(value), { status: 200, headers: { 'content-type': 'application/json' } })
+  const result = value?.data?.hits && !value.data.pagination
+    ? { ...value, data: { ...value.data, pagination: { total: value.data.hits.length } } }
+    : value
+  return new Response(JSON.stringify(result), { status: 200, headers: { 'content-type': 'application/json' } })
 }
 
 function fixture() {
@@ -168,4 +171,60 @@ test('failed refresh preserves the previous complete active source', async () =>
   const pending = JSON.parse(await readFile(join(workspace, 'study/source-pending.json'), 'utf8'))
   assert.equal(pending.status, 'partial')
   assert.notEqual(pending.snapshot, activeAfter.snapshot)
+})
+
+test('same filename across distinct GDC file IDs preserves both verified source files', async () => {
+  const workspace = await mkdtemp(join(tmpdir(), 'capn1-uuid-files-'))
+  await initializeWorkspace(workspace)
+  const fx = fixture()
+  const second = Buffer.from('gene\tcount\nCAPN1\t20\n')
+  fx.files.data.hits.push({ ...fx.files.data.hits[0], file_id: 'file-2',
+    file_size: second.length, md5sum: 'ef27b2f064cdd391033492a689c310eb' })
+  const result = await acquireSource({ workspace, concurrency: 2, fetchImpl: async url => {
+    if (String(url).includes('/files?')) return jsonResponse(fx.files)
+    if (String(url).includes('/cases?')) return jsonResponse(fx.cases)
+    if (String(url).endsWith('/data/file-1')) return new Response(fx.body, { status: 200 })
+    if (String(url).endsWith('/data/file-2')) return new Response(second, { status: 200 })
+    throw Error(`Unexpected URL ${url}`)
+  } })
+  assert.equal(result.status, 'downloaded')
+  assert.equal(result.source.files.length, 2)
+  assert.notEqual(result.source.files[0].path, result.source.files[1].path)
+  for (const file of result.source.files) assert.equal((await stat(join(workspace, file.path))).size, file.file_size)
+  assert.equal(await snapshotIsComplete(workspace, result.source), true)
+})
+
+test('same-byte-length source corruption blocks a cache-hit', async () => {
+  const workspace = await mkdtemp(join(tmpdir(), 'capn1-corrupt-'))
+  await initializeWorkspace(workspace)
+  const fx = fixture()
+  const result = await acquireSource({ workspace, fetchImpl: mockFetch(fx, []) })
+  assert.equal(await snapshotIsComplete(workspace, result.source), true)
+  await writeFile(join(workspace, result.source.files[0].path), 'gene\tcount\nCAPN1\t90\n')
+  assert.equal(await snapshotIsComplete(workspace, result.source), false)
+  await assert.rejects(acquireSource({ workspace, fetchImpl: async () => {
+    throw Error('GDC needed because old cache is corrupted')
+  } }), /GDC needed/)
+})
+
+test('incomplete GDC metadata pages cannot become completed source snapshots', async () => {
+  const workspace = await mkdtemp(join(tmpdir(), 'capn1-pages-'))
+  await initializeWorkspace(workspace)
+  const fx = fixture()
+  fx.files.data.pagination = { total: 2 }
+  await assert.rejects(acquireSource({ workspace, fetchImpl: mockFetch(fx, []) }), /Incomplete GDC files response/)
+})
+
+test('a complete active cache wins over pending; --resume explicitly continues pending', async () => {
+  const workspace = await mkdtemp(join(tmpdir(), 'capn1-pending-priority-'))
+  await initializeWorkspace(workspace)
+  const fx = fixture()
+  const active = await acquireSource({ workspace, fetchImpl: mockFetch(fx, []) })
+  const pending = { ...active.source, status: 'partial' }
+  await writeFile(join(workspace, 'study/source-pending.json'), JSON.stringify(pending))
+  const cached = await acquireSource({ workspace, fetchImpl: async () => { throw Error('network not allowed') } })
+  assert.equal(cached.status, 'cache-hit')
+  assert.equal(cached.snapshot, active.snapshot)
+  const resumed = await acquireSource({ workspace, resume: true, fetchImpl: async () => { throw Error('file already present') } })
+  assert.equal(resumed.status, 'resumed-complete')
 })
