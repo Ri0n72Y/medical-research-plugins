@@ -22,7 +22,7 @@
     "prepare": "node scripts/cli.mjs prepare",
     "headless:qc": "node scripts/cli.mjs headless",
     "acp": "node scripts/cli.mjs acp",
-    "test": "node --test .dsh/skills/capn1-aml-public-reconstruction/tests/*.test.mjs scripts/*.test.mjs"
+    "test": "node --test .dsh/skills/capn1-aml-public-reconstruction/tests/m1-source-cache.test.mjs .dsh/skills/capn1-aml-public-reconstruction/tests/m2-processing.test.mjs scripts/cli.test.mjs"
   },
   "files": [
     "cordis.patch.yml",
