@@ -49,12 +49,12 @@ $env:DEEPSEEK_API_KEY = 'your-key'
 pnpm run web
 ```
 
-Do not put credentials in `study/`, Git files, CLI arguments, screenshots, or `.env` files that might be committed. DSH's credential service can store keys for later use; the environment variable overrides the stored key for that launch. The **deterministic `pnpm run prepare` command does not need an LLM API key**.
+Do not put credentials in `study/`, Git files, CLI arguments, screenshots, or `.env` files that might be committed. DSH's credential service can store keys for later use; the environment variable overrides the stored key for that launch. The **deterministic `pnpm run data:prepare` command does not need an LLM API key**.
 
 ### One-command public data preparation
 
 ```sh
-pnpm run prepare
+pnpm run data:prepare
 ```
 
 This runs the *implemented* M1 + M2 workflow:
@@ -72,13 +72,13 @@ Explicit operations:
 
 ```sh
 # Requery public GDC and rebuild downstream data if source changes
-pnpm run prepare --refresh
+pnpm run data:prepare --refresh
 
 # Rerun processing with the existing GDC source cache
-pnpm run prepare --rerun
+pnpm run data:prepare --rerun
 
 # Choose a different working directory (all study files remain there)
-pnpm run prepare --workspace /absolute/path/to/my-study
+pnpm run data:prepare --workspace /absolute/path/to/my-study
 pnpm run web --workspace /absolute/path/to/my-study
 ```
 
@@ -91,7 +91,7 @@ The modes are **separate DSH profiles**, each derived from its corresponding off
 | Workflow | Command | Purpose |
 |---|---|---|
 | DSH Web (default) | `pnpm run web` | Interactive research discussions and review |
-| Deterministic local preparation | `pnpm run prepare` | M1/M2 source and QC cache without an AI model |
+| Deterministic local preparation | `pnpm run data:prepare` | M1/M2 source and QC cache without an AI model |
 | Headless Agent | `pnpm run headless:qc` | One-shot model-assisted explanation of **existing** cached QC |
 | ACP deployment | `pnpm run deploy:acp` | Initialize separate `research-acp` profile |
 | ACP server | `node scripts/cli.mjs acp` | JSON-RPC stdio for an external ACP client |
@@ -121,7 +121,7 @@ Currently implemented: M0 architecture/skill baseline, M1 GDC source cache, M2 e
 ```sh
 pnpm test
 pnpm run web --dry-run
-pnpm run prepare --dry-run
+pnpm run data:prepare --dry-run
 ```
 
 Actual first-boot DSH profile deployment and full real GDC transfers require a connected target machine and **have not yet been verified in this repository's remote development environment**.
