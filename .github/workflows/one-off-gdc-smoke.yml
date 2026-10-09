@@ -1,0 +1,42 @@
+name: One-off CAPN1 public sandbox smoke
+
+on:
+  push:
+    branches: [sandbox/20261009-public-gdc-smoke]
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Match DSH package manager
+        run: |
+          corepack enable
+          corepack prepare pnpm@11.7.0 --activate
+          node --version
+          pnpm --version
+      - name: Verify source and processing tests
+        run: pnpm test
+      - name: Check launcher
+        run: |
+          pnpm run doctor
+          pnpm run web --dry-run
+      - name: Verify official DSH CLI
+        run: timeout 120s pnpm dlx @deepseek-ai/dsh@0.2.0-rc.2 --version
+      - name: Live GDC single-file M1/M2 smoke
+        run: node scripts/sandbox-smoke.mjs
+      - name: Publish compact public verification artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: capn1-public-gdc-smoke
+          path: smoke-artifacts/
+          if-no-files-found: warn
+          retention-days: 14
