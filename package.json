@@ -20,10 +20,10 @@
     "deploy:headless": "node scripts/cli.mjs deploy headless",
     "deploy:acp": "node scripts/cli.mjs deploy acp",
     "web": "node scripts/cli.mjs web",
-    "prepare": "node scripts/cli.mjs prepare",
     "headless:qc": "node scripts/cli.mjs headless",
     "acp": "node scripts/cli.mjs acp",
-    "test": "node --test .dsh/skills/capn1-aml-public-reconstruction/tests/m1-source-cache.test.mjs .dsh/skills/capn1-aml-public-reconstruction/tests/m2-processing.test.mjs scripts/cli.test.mjs"
+    "test": "node --test .dsh/skills/capn1-aml-public-reconstruction/tests/m1-source-cache.test.mjs .dsh/skills/capn1-aml-public-reconstruction/tests/m2-processing.test.mjs scripts/cli.test.mjs",
+    "data:prepare": "node scripts/cli.mjs prepare"
   },
   "files": [
     "cordis.patch.yml",
