@@ -57,6 +57,20 @@ Workspace artifacts and research state
 
 The agent coordinates and explains. Scientific software computes. The workspace persists.
 
+## 3.1. Source-linked deployment and run modes
+
+The first usable entrypoint is a source checkout plus a thin DSH bundle that configures the existing `skill-filesystem` provider. `scripts/cli.mjs` invokes pinned `@deepseek-ai/dsh@0.2.0-rc.2` via `pnpm dlx`, using the DSH-matched `pnpm@11.7.0` toolchain, creates a `research-web` profile **once** from the shipped `web` template, deploys the bundle, and boots from the selected study directory.
+
+The separate headless and ACP profiles must come from the shipped `headless` and `acp` templates respectively. Headless is one task; ACP is a stdio protocol service requiring an external client. Neither is an alias for the Web profile.
+
+The source-linked bundle currently receives its skill root via a launch-scoped environment variable. It relies on the cloned project remaining in place; a future registry-distributed package may require a packaged skill provider, but v0 does not implement that prematurely.
+
+DSH's current working directory is the workspace starting context. Automatic Web workspace pre-registration is **not** a verified supported CLI capability in the pinned version, so the user may need to choose the directory in the browser. Do not mutate private DSH workspace storage.
+
+The deterministic `prepare` entrypoint calls only the implemented M1/M2 scripts, uses their source and processed caches, and writes a QC report. A model credential is required only for AI-backed Web/headless/ACP operations. The full publication reconstruction/report is still outside this delivered slice.
+
+See [deployment](deployment.md) for operational commands and acceptance boundaries.
+
 ## 4. Use DSH before adding infrastructure
 
 The first implementation must reuse DSH's existing capability seams wherever possible.

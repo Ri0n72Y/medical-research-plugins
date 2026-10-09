@@ -1,0 +1,6 @@
+# The research bundle configures the DSH-native skill-filesystem provider.
+# It does NOT register another filesystem, runtime, Agent, or research database.
+# Its configured root is supplied by scripts/cli.mjs on every launch.
+- id: skill-filesystem
+  config:
+    customSkillDirs: !!js "process.env.DSH_MED_RESEARCH_SKILL_ROOT ? [process.env.DSH_MED_RESEARCH_SKILL_ROOT] : []"
