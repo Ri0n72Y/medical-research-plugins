@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-09",
+  "mode": "one-public-expression-file-smoke",
+  "study": "TCGA-LAML",
+  "available_gdc_expression_files": 151,
+  "available_public_clinical_cases": 200,
+  "source": {
+    "file_id": "0101462d-6b47-4134-8164-667ebddc9091",
+    "file_name": "aebb2406-6a90-48bc-be3d-120bf08b6f11.rna_seq.augmented_star_gene_counts.tsv",
+    "bytes": 4235226,
+    "md5": "df59af612a16c81587854424cd73c233",
+    "sample_snapshot": "gdc-8ee3ad146288"
+  },
+  "processed": {
+    "gene_ids": 60660,
+    "clinical_case_rows": 200,
+    "clinical_diagnosis_rows": 200,
+    "clinical_followup_rows": 7563,
+    "qc_issue_count": 14,
+    "capn1_gene_id": "ENSG00000014216.16",
+    "verified_second_run_status": "cache-hit",
+    "cohort_approved": false,
+    "survival_endpoint_defined": false
+  },
+  "online_test_run": "https://github.com/Ri0n72Y/medical-research-plugins/actions/runs/37895926420",
+  "full_raw_files_committed": false
+}
