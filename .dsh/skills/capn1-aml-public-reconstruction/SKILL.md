@@ -113,9 +113,15 @@ Recognize source statuses:
 
 Source acquisition can be long-running. Prefer DSH's existing background job support when available.
 
+## M2 — processing and QC
+
+When the completed M1 source is available, read `references/m2-operations.md` and use the bundled `scripts/m2-prepare.mjs`. Check `study/processed.json` first; disclose a compatible local processed cache hit. Only use `--rerun` after an explicit reprocessing request; never refetch GDC as part of M2.
+
+Read `qc.md` and `qc.json` before proceeding. M2 retains all cases and files, does not resolve biological sample identity, and does not define a clinical survival endpoint. Stop at the researcher QC gate before analysis.
+
 ## Later canonical stages
 
-After M1, follow `references/canonical-flow.md` for processing/QC, CAPN1 expression and survival, differential expression, enrichment, STRING, immune analysis, reconstruction reporting, and exploration.
+After M2, follow `references/canonical-flow.md` for researcher-approved cohort, CAPN1 expression and survival, differential expression, enrichment, STRING, immune analysis, reconstruction reporting, and exploration.
 
 Do not execute a later stage merely because it exists. Continue only when prerequisites and required researcher decisions are satisfied.
 
