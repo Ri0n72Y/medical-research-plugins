@@ -114,7 +114,7 @@ New Cordis services or tools should exist only where DSH and mature community to
 
 ## Repository status
 
-Current phase: **CAPN1 skill baseline**.
+Current phase: **M1 — workspace initialization + GDC source cache**.
 
 The project now includes a DSH project-local skill at:
 
@@ -129,8 +129,10 @@ The skill is intentionally procedural rather than computational. It defines:
 - DSH/native/public-tool reuse order;
 - minimal study and run-manifest templates.
 
-Scientific analysis scripts and the reproducible R/Bioconductor runtime are the next implementation layer.
+M1 now provides deterministic workspace initialization and public TCGA-LAML source acquisition. The GDC source is persisted as a content-addressed workspace snapshot, interrupted transfers resume from local manifests, normal reruns prefer local cache, and explicit refresh re-queries GDC without redownloading an unchanged snapshot.
+
+The next implementation layer is M2: expression/clinical processing + cohort QC, followed by the reproducible R/Bioconductor analysis runtime.
 
 When this repository itself is opened as a DSH project workspace, the project-local skill path is already in DSH's normal skill discovery surface. The later distributable plugin/bundle should package the same skill rather than invent a second workflow definition.
 
-See [docs/architecture.md](docs/architecture.md) for the v0 architecture and [AGENTS.md](AGENTS.md) for contributor and agent constraints.
+See [docs/architecture.md](docs/architecture.md) for the v0 architecture, [docs/m1-source-cache.md](docs/m1-source-cache.md) for the executable M1 contract, and [AGENTS.md](AGENTS.md) for contributor and agent constraints.

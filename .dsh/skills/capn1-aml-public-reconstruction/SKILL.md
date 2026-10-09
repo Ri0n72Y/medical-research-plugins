@@ -6,81 +6,68 @@ whenToUse: Use when the user wants to initialize, reproduce, continue, inspect, 
 
 # CAPN1 / AML Public Reconstruction
 
-This skill is the canonical v0 workflow for this repository.
-
-It is intentionally overfit to one study. Do not generalize it into a biomedical workflow framework while executing this skill.
+This is the canonical v0 workflow. It is intentionally overfit to one study. Do not generalize it into a biomedical workflow framework while executing it.
 
 ## Core boundary
 
 The researcher owns the science.
 
-You may organize information, inspect the workspace, fetch approved public data, call deterministic scientific tools, summarize formal artifacts, and help explore alternatives.
+You may inspect the workspace, organize evidence, fetch approved public data, call deterministic scientific tools, summarize formal artifacts, and help explore alternatives.
 
-Do not silently decide scientifically material assumptions.
+Do not silently choose scientifically material assumptions. Do not turn association into mechanism. Do not use the language model itself as the numerical implementation of statistics or bioinformatics.
 
-Do not treat association as mechanism.
-
-Do not use the language model itself as the numerical implementation of statistics or bioinformatics.
-
-## First action: inspect the workspace
+## First action: inspect, then reuse
 
 Before any external fetch or analysis:
 
-1. inspect the current workspace for an initialized CAPN1 study;
-2. inspect study state, decisions, source manifests, processed datasets, run manifests, and formal artifacts;
-3. determine whether a compatible completed artifact already answers the user's request;
-4. if a compatible cache exists, tell the user that you are using the local cached result and do not recompute;
-5. if the user asked to continue, resume from the first incomplete required stage;
-6. fetch or recompute only when no compatible artifact exists or the user explicitly requests refresh / reanalysis.
+1. inspect `study/`, source state, decisions, processed data, run manifests, and formal artifacts;
+2. determine whether a compatible completed artifact already answers the request;
+3. if yes, explicitly tell the user that the local cached result is being used and do not recompute;
+4. if the user asked to continue, resume from the first incomplete required stage;
+5. fetch or recompute only when no compatible artifact exists or the user explicitly requests refresh / reanalysis.
 
 Never infer cache validity from chat memory alone.
 
-## Cache intent
+Interpret intent conservatively:
 
-Interpret common requests this way unless the user clearly says otherwise:
-
-- explain / show / inspect / continue -> reuse compatible local cache;
-- analyze from another angle -> reuse existing source and processed data where compatible;
-- reanalyze / rerun this analysis -> rerun the smallest affected analysis, but do not refetch source data;
-- change a parameter -> create a new affected run from compatible local inputs;
-- refetch / download again / use latest data -> refresh the external source and create new downstream artifacts;
-- start over from source -> refresh the source and create a new downstream lineage without deleting old completed runs.
-
-Whenever cache is reused, disclose it plainly.
+- explain / show / inspect / continue -> reuse compatible cache;
+- another angle -> reuse source and processed data where compatible;
+- reanalyze / rerun analysis -> recompute only the smallest affected analysis;
+- change a parameter -> create a new affected run;
+- refetch / latest / download again -> refresh external source;
+- start over from source -> refresh source and create a new lineage without deleting prior completed work.
 
 ## Workspace contract
 
-Prefer these study areas when they exist:
+Research truth lives in workspace artifacts, not chat history.
 
-- `study/` — brief, reconstruction definition, decisions, status;
-- `references/` — paper metadata, searches, notes;
-- `data/manifests/` — external source queries and retrieval metadata;
+Use these areas when initialized:
+
+- `study/` — brief, reconstruction definition, decisions, source state, status;
+- `references/` — searches, papers, notes;
+- `data/manifests/` — external queries and retrieval metadata;
 - `data/raw/` — source cache;
-- `data/processed/` — derived reusable datasets;
-- `runs/` — immutable completed or failed analytical runs;
-- `artifacts/` — formal tables, figures, and reports;
-- `exploration/` — non-canonical searches, analyses, and notes.
+- `data/processed/` — reusable derived datasets;
+- `runs/` — immutable analytical runs;
+- `artifacts/` — formal tables, figures, reports;
+- `exploration/` — non-canonical work.
 
 Do not create a database or hidden state service for v0.
 
 ## Reconstruction classes
 
-Every canonical step has one of four meanings:
+- `PUBLIC-FIXED` — public evidence and tooling are sufficient.
+- `RECONSTRUCTED` — use a declared public substitute because the original implementation is unavailable.
+- `DECISION` — ask the researcher before crossing the boundary.
+- `OPTIONAL` — useful context that must not silently enter the canonical result.
 
-- `PUBLIC-FIXED`: public evidence and tooling are sufficient; execute deterministically when prerequisites are met.
-- `RECONSTRUCTED`: use a declared public substitute because the original implementation is not publicly recoverable.
-- `DECISION`: ask the researcher before crossing this boundary.
-- `OPTIONAL`: useful context that must not silently enter the canonical result.
+Read `references/dependency-cut.md` before implementing or changing a stage. Read `references/canonical-flow.md` when executing beyond M1.
 
-Read `references/dependency-cut.md` before implementing or changing a stage.
+## Human-in-the-loop
 
-## Scientific decisions
+Use DSH user questions for scientific choices. Use DSH approval only for execution permission under the active policy.
 
-Use the DSH human-question mechanism for scientific decisions.
-
-Do not misuse execution approval as scientific review.
-
-The initial decision ports are:
+Initial decision ports:
 
 - D1 — CAPN1 high / low grouping;
 - D2 — multivariable survival covariates;
@@ -88,161 +75,73 @@ The initial decision ports are:
 - D4 — STRING confidence;
 - D5 — immune deconvolution path.
 
-Record every accepted decision in workspace study state before downstream formal analysis depends on it.
+Record accepted decisions in workspace state before downstream formal analysis depends on them.
 
-## Canonical stages
+## M1 — initialization and GDC source cache
 
-### Stage 0 — Inspect / initialize
+Read `references/m1-operations.md` before running M1.
 
-If the study is absent, initialize only the minimal workspace state from the templates bundled with this skill.
+M1 resources:
 
-Do not fetch public data merely because the study was initialized.
+- `scripts/init-workspace.mjs`;
+- `scripts/gdc-source.mjs`.
 
-If the study already exists, preserve it and continue from its recorded state.
+Resolve resource paths from DSH's loaded skill resources; do not assume repository-relative paths after packaging.
 
-### Stage 1 — Public reference and method map
+The current M1 runner requires Node 18+ with built-in `fetch`. Use the existing DSH execution surface. If the target carrier cannot execute the bundled resource, report that compatibility gap; do not install an ad-hoc runtime or invent a Cordis service during the research run.
 
-Use the canonical paper metadata in `references/canonical-paper.md` and current public sources as needed.
+For initialization, run the init resource only if `study/reconstruction.yaml` is absent. It must preserve existing researcher files.
 
-Record what is public evidence and what is reconstruction.
+For source acquisition, inspect both `study/source.json` and `study/source-pending.json`:
 
-Do not invent unavailable original parameters.
+- compatible completed `study/source.json` -> disclose cache use and reuse it for ordinary research work;
+- pending acquisition + no valid active -> run normally to resume it;
+- pending acquisition + valid active -> reuse active by default; use `--resume` only if the user explicitly wants to finish the pending acquisition;
+- no completed or pending source -> run without `--refresh` to acquire public TCGA-LAML;
+- explicit refresh/latest request -> run with `--refresh`.
 
-### Stage 2 — TCGA-LAML source acquisition
+A valid active source is preferred over pending work; cache validity includes content checksums, not just file sizes. A pending acquisition does not invalidate an older completed active source. A changed refresh becomes active only after the new snapshot fully validates.
 
-Class: `PUBLIC-FIXED`.
+Never add `--refresh` merely because a new chat/session began.
 
-Use NCI GDC public data.
+Recognize source statuses:
 
-If compatible local source data and manifests exist, reuse them unless the user explicitly requests refresh.
+- `cache-hit` — zero GDC requests;
+- `downloaded` — source snapshot acquired;
+- `resumed-complete` — interrupted snapshot completed from saved manifest;
+- `refresh-unchanged` — GDC re-queried, fingerprint unchanged, no redundant expression download.
 
-On a fresh acquisition, preserve the public query / manifest / release metadata needed to explain exactly what was retrieved.
+Source acquisition can be long-running. Prefer DSH's existing background job support when available.
 
-### Stage 3 — Processing and cohort QC
+## Later canonical stages
 
-Prepare reusable expression and clinical artifacts using deterministic scripts.
+After M1, follow `references/canonical-flow.md` for processing/QC, CAPN1 expression and survival, differential expression, enrichment, STRING, immune analysis, reconstruction reporting, and exploration.
 
-Report missingness, duplicate or sample-mapping issues, and any proposed exclusions.
+Do not execute a later stage merely because it exists. Continue only when prerequisites and required researcher decisions are satisfied.
 
-If an exclusion requires scientific judgment rather than mechanical data validity, ask the researcher before applying it.
-
-### Stage 4 — CAPN1 expression and survival
-
-Reuse compatible processed inputs.
-
-D1 must be resolved before formal grouped survival analysis.
-
-Use established R statistical tooling; do not calculate statistics in model text.
-
-D2 is required before a formal multivariable model is introduced.
-
-Create a new run rather than overwriting a previous completed survival run.
-
-### Stage 5 — Differential expression
-
-Use a deterministic count-based implementation.
-
-D3 must be explicit before the DEG result becomes canonical.
-
-Preserve the full result table as an artifact; filtered lists are derived views.
-
-### Stage 6 — GO / KEGG enrichment
-
-Class: `RECONSTRUCTED`.
-
-The original study used DAVID. v0 may use a pinned public Bioconductor implementation such as clusterProfiler.
-
-Always disclose the substitution in the run and report.
-
-### Stage 7 — STRING PPI
-
-Use the public STRING interface.
-
-D4 must be explicit.
-
-Preserve identifier mapping, query parameters, and returned network data needed to reconstruct the result.
-
-### Stage 8 — Immune analysis
-
-ssGSEA may use a pinned public GSVA implementation and a versioned public gene-signature resource.
-
-For CIBERSORT-style deconvolution, resolve D5:
-
-1. ssGSEA only;
-2. declared public substitute;
-3. user-supplied licensed CIBERSORT assets;
-4. skip deconvolution.
-
-Never bundle or imply access to licensed CIBERSORT assets.
-
-Never call a public substitute "CIBERSORT reproduction."
-
-### Stage 9 — Reconstruction report
-
-Build the report from formal workspace artifacts.
-
-Separate clearly:
-
-- original publication claim;
-- public reconstruction method;
-- reconstructed result;
-- directional agreement or disagreement;
-- method substitutions;
-- unresolved uncertainty.
-
-A failed reproduction or numerical mismatch is a reportable result, not something to hide by parameter tuning.
-
-### Stage 10 — Exploration
-
-After the canonical work, the user may ask for current literature, alternative cutoffs, other datasets, or new hypotheses.
-
-Keep such work under an exploration area or otherwise mark it non-canonical.
-
-Do not silently mutate canonical decisions or runs.
-
-## Execution rules
+## Execution order
 
 Prefer, in order:
 
 1. DSH native capability;
 2. official public scientific API or maintained scientific package;
 3. a thin deterministic script;
-4. a new Cordis tool or service only after a concrete capability gap is demonstrated.
+4. a new Cordis tool/service only after a demonstrated capability gap.
 
-Use existing DSH file tools for workspace state.
+Use DSH file tools for workspace state, shell/jobs for deterministic local scripts, web/MCP for appropriate existing integrations, and subagents/workflow only for useful local orchestration. Do not use workflow/subagents as the durable study state machine.
 
-Use shell execution for deterministic local scripts.
+## Formal result rule
 
-Use DSH web or MCP capability when it is the appropriate existing integration.
+A reusable formal run must identify its inputs and digests/versions, source dataset/release, implementation or script, material software versions, parameters, referenced researcher decisions, outputs, warnings, and completion status.
 
-Use workflow / subagents only for useful local parallel work; do not make them the durable study state machine.
+If that lineage cannot be established, do not present the result as canonical reusable cache.
 
-## Formal run requirement
+Canonical reconstruction and exploration must remain visibly separate. Exploration becomes formal only through an explicit new run or protocol revision.
 
-A completed analytical run must record enough information to identify:
-
-- inputs and their digests or versions;
-- source dataset / release when known;
-- implementation or script;
-- relevant software versions;
-- parameters;
-- researcher decisions;
-- outputs;
-- warnings;
-- completion status.
-
-If these cannot be established, do not present the run as a reusable canonical cache.
-
-## User-facing communication
+## Communication
 
 Keep the workflow understandable to a medical researcher.
 
-When using cache, say so.
-
-When substituting a method, say so.
-
-When a decision belongs to the researcher, stop and ask instead of hiding it in a default.
-
-When a tool fails or data are incomplete, expose the failure before proceeding.
+When using cache, say so. When substituting a method, say so. When a scientific decision belongs to the researcher, stop and ask. When a tool fails or data are incomplete, expose the failure before proceeding.
 
 The goal is not maximum autonomy. The goal is transparent, reusable research operations under researcher control.
