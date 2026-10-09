@@ -30,6 +30,11 @@ jobs:
           pnpm run web --dry-run
       - name: Verify official DSH CLI
         run: timeout 120s pnpm dlx @deepseek-ai/dsh@0.2.0-rc.2 --version
+      - name: Real research-web profile deployment
+        run: |
+          pnpm run deploy:web
+          pnpm dlx @deepseek-ai/dsh@0.2.0-rc.2 --profile research-web --dump-config > /tmp/research-profile.yml
+          grep -n 'skill-filesystem' /tmp/research-profile.yml
       - name: Live GDC single-file M1/M2 smoke
         run: node scripts/sandbox-smoke.mjs
       - name: Publish compact public verification artifacts
