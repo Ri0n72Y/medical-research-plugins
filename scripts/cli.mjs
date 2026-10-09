@@ -156,7 +156,7 @@ function help() {
 
 pnpm run doctor           Check Node/pnpm
 pnpm run web              Deploy research-web as needed and launch DSH Web
-pnpm run prepare          Download/cache public GDC data and write M2 QC
+pnpm run data:prepare          Download/cache public GDC data and write M2 QC
 pnpm run headless:qc      Generate an AI-assisted summary from cached QC
 pnpm run deploy:acp       Deploy the separate ACP profile
 node scripts/cli.mjs acp  Serve ACP JSON-RPC (stdout reserved)

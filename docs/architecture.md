@@ -67,7 +67,7 @@ The source-linked bundle currently receives its skill root via a launch-scoped e
 
 DSH's current working directory is the workspace starting context. Automatic Web workspace pre-registration is **not** a verified supported CLI capability in the pinned version, so the user may need to choose the directory in the browser. Do not mutate private DSH workspace storage.
 
-The deterministic `prepare` entrypoint calls only the implemented M1/M2 scripts, uses their source and processed caches, and writes a QC report. A model credential is required only for AI-backed Web/headless/ACP operations. The full publication reconstruction/report is still outside this delivered slice.
+The deterministic `data:prepare` entrypoint calls only the implemented M1/M2 scripts, uses their source and processed caches, and writes a QC report. A model credential is required only for AI-backed Web/headless/ACP operations. The full publication reconstruction/report is still outside this delivered slice.
 
 See [deployment](deployment.md) for operational commands and acceptance boundaries.
 

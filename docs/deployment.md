@@ -92,7 +92,7 @@ medical-research-plugins/
 
 The data workspace is ignored by Git. The DSH model conversation is not the source of truth.
 
-`pnpm run prepare` performs deterministic M1+M2 data preparation:
+`pnpm run data:prepare` performs deterministic M1+M2 data preparation:
 
 - first time: source acquisition and QC processing;
 - subsequent compatible runs: verify and reuse local source and processed artifacts;
@@ -106,14 +106,14 @@ Only **QC** reports are currently supported. The full survival/GO/KEGG/STRING/im
 To use a custom workspace:
 
 ```sh
-pnpm run prepare --workspace /absolute/path/to/study
+pnpm run data:prepare --workspace /absolute/path/to/study
 pnpm run web --workspace /absolute/path/to/study
 ```
 
 PowerShell example:
 
 ```powershell
-pnpm run prepare --workspace 'D:\\MedicalResearch\\CAPN1'
+pnpm run data:prepare --workspace 'D:\\MedicalResearch\\CAPN1'
 pnpm run web --workspace 'D:\\MedicalResearch\\CAPN1'
 ```
 
@@ -135,7 +135,7 @@ pnpm run web
 
 Alternatively use the Web Models/credentials settings. Keep secrets outside the workspace and Git. Do not hardcode them into `cordis.patch.yml` or launch args.
 
-`pnpm run prepare` operates locally and accesses only public GDC. It does not request an LLM key.
+`pnpm run data:prepare` operates locally and accesses only public GDC. It does not request an LLM key.
 
 ## 5. Headless: a one-shot cached QC summary
 
@@ -169,7 +169,7 @@ Without changing external state:
 ```sh
 pnpm test
 pnpm run web --dry-run
-pnpm run prepare --dry-run
+pnpm run data:prepare --dry-run
 pnpm run deploy:acp --dry-run
 ```
 
@@ -180,8 +180,8 @@ During a connected acceptance run, verify:
 1. `pnpm run doctor` reports the supported Node version and exact pnpm version;
 2. `pnpm run deploy:web` creates a web-derived profile and registers the research bundle;
 3. `pnpm run web` starts without composition errors and exposes the CAPN1 skill in the selected workspace;
-4. `pnpm run prepare` retrieves public GDC and publishes `source.json`, `processed.json`, and `qc.md`;
-5. a second `pnpm run prepare` announces verified local source + processed cache reuse, with no GDC requests;
+4. `pnpm run data:prepare` retrieves public GDC and publishes `source.json`, `processed.json`, and `qc.md`;
+5. a second `pnpm run data:prepare` announces verified local source + processed cache reuse, with no GDC requests;
 6. missing/corrupt data, interrupted fetches, and deliberate refresh/reanalysis retain previous completed artifacts;
 7. with a valid API key, headless can explain already cached QC;
 8. optional ACP handshake is driven by a real compatible client.

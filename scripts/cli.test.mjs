@@ -40,3 +40,12 @@ test('ACP dry-run has a dedicated profile, not the Web entrypoint', () => {
   assert.match(run.stderr, /research-acp/)
   assert.doesNotMatch(run.stderr, /research-web/)
 })
+
+test('package lifecycle cannot invoke a public GDC download during install or tests', async () => {
+  const { readFile } = await import('node:fs/promises')
+  const pkg = JSON.parse(await readFile(resolve(dirname(fileURLToPath(import.meta.url)), '../package.json'), 'utf8'))
+  assert.equal(pkg.scripts.prepare, undefined)
+  assert.equal(pkg.scripts.preinstall, undefined)
+  assert.equal(pkg.scripts.postinstall, undefined)
+  assert.ok(pkg.scripts['data:prepare'].includes('scripts/cli.mjs prepare'))
+})
