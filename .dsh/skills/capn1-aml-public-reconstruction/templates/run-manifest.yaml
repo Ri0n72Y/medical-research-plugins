@@ -1,0 +1,27 @@
+run:
+  id: null
+  stage: null
+  status: pending
+  created_at: null
+  completed_at: null
+
+inputs: {}
+
+method:
+  implementation: null
+  script: null
+  software: {}
+
+parameters: {}
+
+decisions: []
+
+outputs: []
+
+warnings: []
+
+cache:
+  reusable: false
+  compatibility:
+    input_digests: {}
+    parameter_digest: null

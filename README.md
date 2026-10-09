@@ -114,8 +114,23 @@ New Cordis services or tools should exist only where DSH and mature community to
 
 ## Repository status
 
-Current phase: **architecture baseline**.
+Current phase: **CAPN1 skill baseline**.
 
-No production workflow implementation is committed yet.
+The project now includes a DSH project-local skill at:
+
+`.dsh/skills/capn1-aml-public-reconstruction/`
+
+The skill is intentionally procedural rather than computational. It defines:
+
+- workspace-first and cache-first behavior;
+- canonical stage boundaries;
+- researcher decision ports;
+- public reconstruction vs. original-method distinctions;
+- DSH/native/public-tool reuse order;
+- minimal study and run-manifest templates.
+
+Scientific analysis scripts and the reproducible R/Bioconductor runtime are the next implementation layer.
+
+When this repository itself is opened as a DSH project workspace, the project-local skill path is already in DSH's normal skill discovery surface. The later distributable plugin/bundle should package the same skill rather than invent a second workflow definition.
 
 See [docs/architecture.md](docs/architecture.md) for the v0 architecture and [AGENTS.md](AGENTS.md) for contributor and agent constraints.
