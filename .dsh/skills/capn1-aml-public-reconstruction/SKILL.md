@@ -121,7 +121,7 @@ Read `qc.md` and `qc.json` before proceeding. M2 retains all cases and files, do
 
 ## M3 — CAPN1 expression and survival demonstration
 
-Read docs/m3-expression-survival.md and use scripts/m3-survival.mjs after complete M2 preparation. R with the survival package is required.
+Read references/m3-operations.md from the loaded DSH skill resources and use the bundled scripts/m3-survival.mjs after complete M2 preparation. R with the survival package is required.
 
 Use pnpm run survival, and --rerun only when explicitly requested. M3 does not refetch GDC. Its default records unique case/file mappings, median CAPN1 TPM grouping, GDC OS follow-up, Kaplan–Meier, log-rank, and unadjusted Cox. Inspect cohort.tsv, exclusions.tsv, statistics.tsv and report.md.
 
