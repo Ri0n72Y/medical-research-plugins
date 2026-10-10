@@ -4,6 +4,14 @@ Status: **v0 baseline**
 
 This document defines the initial architecture for the CAPN1 / AML medical research skill pack. It deliberately describes a narrow reference implementation rather than a general research platform.
 
+## 0. Demonstration-first scientific contract
+
+The CAPN1/AML paper is a case for showing an end-to-end AI Harness assisted biomedical workflow. This is not a numerical replication or a test of the authors' p-values. Unknown paper details should use documented, conventional public substitutes, not block execution.
+
+Success means workflow coverage, correct deterministic scientific computation, provenance and explicit human/AI responsibilities. The Harness can support medical interpretation, but clinical meaning remains a researcher judgment; statistical association alone cannot establish biological causality or replace independent experiments.
+
+Declared demonstration defaults (median CAPN1 split, conservative case pairing, valid censoring rule, unadjusted Cox) can run without repetitive researcher questions. Unsafe clinical assumptions and changes to the research question still require review.
+
 ## 1. Problem statement
 
 Medical researchers increasingly need to supervise AI / "smart medicine" interdisciplinary work, but an LLM chat interface does not by itself explain where agent engineering belongs in a real research process.
@@ -24,7 +32,7 @@ The project must also make the boundary clear: experiments, clinical collection,
 
 v0 reconstructs the public-data workflow of the 2023 CAPN1 / AML study led by Houcai Wang.
 
-The target is a **public reconstruction**, not bit-for-bit reproduction of the original unpublished environment.
+The target is a **public workflow reconstruction**, not bit-for-bit reproduction of the original unpublished environment or statistical results.
 
 Where the original implementation is not publicly recoverable, v0 either:
 

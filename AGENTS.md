@@ -6,6 +6,14 @@ Build a DSH-native medical research workflow reference implementation that demon
 
 The v0 project is intentionally overfit. Do not turn it into a general-purpose biomedical research framework unless later evidence from real use requires that abstraction.
 
+## Demonstration-first objective
+
+The CAPN1/AML paper is a realistic reference for showing a complete, auditable AI Harness assisted biomedical research process. Do not use matching the paper's unpublished parameters, p-values, or conclusions as acceptance criteria.
+
+Where the original paper is incomplete, apply a declared, scientifically reasonable conventional method and continue. Missing original methods are not an AI capability boundary. The real boundaries are clinical-meaning judgment, inference of biological causality from correlation, and verification of hypotheses without independent experiments.
+
+Evaluate workflow coverage, reproducibility, transparent provenance, scientifically valid computations, and visible human/AI responsibilities.
+
 ## Source of truth
 
 The project architecture baseline is `docs/architecture.md`.
@@ -83,8 +91,8 @@ A mismatch with the original paper is a result to report, not an error to concea
 The researcher owns:
 
 - the research question;
-- cohort inclusion / exclusion choices;
-- scientifically meaningful thresholds;
+- medical judgment about cohort validity (declared conservative structural defaults may run);
+- changes to the documented, conventional demonstration defaults;
 - endpoint definitions;
 - model covariates;
 - biological interpretation;
