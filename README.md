@@ -41,6 +41,14 @@ M3 verifies cached M2 inputs, derives an auditable patient-level CAPN1/OS cohort
 
 A one-file smoke example is not sufficient to support the statistical study.
 
+### M4: Differential expression
+
+After M3, install **R/Bioconductor DESeq2** and run:
+
+    pnpm run deg
+
+M4 verifies M2 raw counts and M3 paired CAPN1 high/low cohort, fits DESeq2, and writes full/filter DEG tables, volcano plot, method provenance and immutable cache. The default screen uses FDR < 0.05 and |log2FC| >= 1. This is a conventional methods demonstration, not a reproduction of the paper's exact gene list. See [M4 methods](docs/m4-differential-expression.md).
+
 ### Configure your model API key
 
 For AI-assisted conversations you must configure a model provider. With the default DeepSeek route, use **`DEEPSEEK_API_KEY`** in the environment that launches DSH, or configure credentials through DSH's model/settings interface.
@@ -126,7 +134,7 @@ The current source code is under `.dsh/skills/capn1-aml-public-reconstruction/`.
 
 ## Status and tests
 
-Currently implemented: M0 baseline, M1 GDC source cache, M2 expression/clinical/QC, M3 CAPN1 paired-cohort and R survival, and DSH profile launcher. M3 requires R and full M2 data. DEG, enrichment, immune analysis, full report, and registry-published plugin are later work.
+Currently implemented: M0 baseline, M1 GDC source cache, M2 expression/clinical/QC, M3 CAPN1 paired-cohort and R survival, M4 DESeq2 raw-count differential expression, and DSH profile launcher. M3 requires R and full M2 data. Enrichment, immune analysis, full report, and registry-published plugin are later work.
 
 ```sh
 pnpm test

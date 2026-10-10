@@ -78,9 +78,9 @@ A parameter or cohort change creates a new run. Do not overwrite an earlier comp
 
 ## Stage 5 — Differential expression
 
-Use a deterministic count-based implementation.
+Use the official deterministic R/Bioconductor DESeq2 implementation on raw M2 counts, grouped by verified M3 paired cohort (never substitute TPM).
 
-D3 must be explicit before a filtered DEG result becomes canonical.
+D3 demonstration default: BH adjusted p < 0.05 and abs(log2FC) >= 1. Record this choice; it is not a requirement to recover hidden original thresholds.
 
 Preserve the complete result table. Thresholded gene sets are derived artifacts and must reference the threshold decision.
 

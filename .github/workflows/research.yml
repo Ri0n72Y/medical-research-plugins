@@ -1,4 +1,4 @@
-name: CAPN1 M1-M3 checks
+name: CAPN1 M1-M4 checks
 
 on:
   pull_request:
@@ -25,5 +25,9 @@ jobs:
           use-public-rspm: true
       - name: Ensure survival is available
         run: Rscript -e 'if (!requireNamespace("survival", quietly=TRUE)) install.packages("survival", repos="https://cloud.r-project.org")'
-      - name: Deterministic tests, including synthetic M3 R survival
+      - name: Install Bioconductor DESeq2
+        run: |
+          Rscript -e 'if (!requireNamespace("BiocManager", quietly=TRUE)) install.packages("BiocManager", repos="https://cloud.r-project.org")'
+          Rscript -e 'if (!requireNamespace("DESeq2", quietly=TRUE)) BiocManager::install("DESeq2", ask=FALSE, update=FALSE, quiet=TRUE); stopifnot(requireNamespace("DESeq2", quietly=TRUE))'
+      - name: Deterministic M1-M4 tests, including real synthetic R analyses
         run: pnpm test
