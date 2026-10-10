@@ -1,0 +1,29 @@
+name: CAPN1 M1-M3 checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: 'release'
+          use-public-rspm: true
+      - name: Ensure survival is available
+        run: Rscript -e 'if (!requireNamespace("survival", quietly=TRUE)) install.packages("survival", repos="https://cloud.r-project.org")'
+      - name: Deterministic tests, including synthetic M3 R survival
+        run: pnpm test
