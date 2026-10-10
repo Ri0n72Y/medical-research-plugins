@@ -25,6 +25,12 @@ Inputs: verified `study/source.json`, matching `study/processed.json`, public GD
 
 **No** multivariable claims, tumor-versus-normal comparisons, pathway enrichment, mechanistic conclusions, or confirmed reproduction claims.
 
+## Public exploratory run (2026-10-10)
+
+A completed GitHub Actions public run using all 151 expression files and 200 clinical cases produced a **candidate** cohort of 130 (78 deaths). Median CAPN1 TPM = 83.6826; log-rank P = 0.0010775; high/low Cox HR = 2.113 (95% CI 1.340–3.333), P = 0.00129. Continuous log2(TPM+1) Cox HR = 1.798 (95% CI 1.188–2.721), P = 0.00555. A second full public run matched these results. Independent Python PHReg / survdiff computations matched R numerically.
+
+These numbers are **method-contingent exploratory results**, not paper-exact findings. Full report and exclusion counts: [public M3 evidence](../examples/public-gdc-survival-2026-10-10/README.md).
+
 ## Reproducible execution
 
 First prepare source + processed data as usual, preserving the cache:
