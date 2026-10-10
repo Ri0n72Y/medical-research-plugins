@@ -121,7 +121,7 @@ Read `qc.md` and `qc.json` before proceeding. M2 retains all cases and files, do
 
 ## M3 — Provisional survival (non-canonical)
 
-Only when explicitly requested, use `pnpm run data:survival:explore` after verified M1/M2 and R `survival`. Read `docs/m3-survival-reconstruction.md`. No fetch. Median TPM and OS definitions are **unverified reconstruction assumptions**, not the paper's confirmed Methods. Store results in `exploration/`, disclose cache hits, and never mark D1/D2 or cohort approval resolved.
+Only when explicitly requested, use `pnpm run data:survival:explore` after verified M1/M2 and R `survival`. Read `references/m3-operations.md`. No fetch. Median TPM and OS definitions are **unverified reconstruction assumptions**, not the paper's confirmed Methods. Store results in `exploration/`, disclose cache hits, and never mark D1/D2 or cohort approval resolved.
 
 ## Later canonical stages
 
