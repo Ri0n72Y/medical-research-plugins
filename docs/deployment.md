@@ -137,6 +137,20 @@ Alternatively use the Web Models/credentials settings. Keep secrets outside the 
 
 `pnpm run data:prepare` operates locally and accesses only public GDC. It does not request an LLM key.
 
+## 4.1. Explicit exploratory survival (M3)
+
+After `pnpm run data:prepare`, install a compatible R distribution with the `survival` package. Verify with `Rscript -e "library(survival); packageVersion('survival')"`.
+
+```sh
+pnpm run data:survival:explore
+# Only when explicitly requested:
+pnpm run data:survival:explore --rerun
+```
+
+The command reads the cached M1/M2 artifacts, computes a **provisional** patient cohort and produces KM/log-rank/univariable Cox analysis under `exploration/capn1-os`. Repeated compatible invocation reuses the previous analysis; it never silently fetches GDC or calls an LLM.
+
+This is not a formal reproduction of the paper's unknown original cutoff, cohort, survival endpoint or model covariates. Read [M3](m3-survival-reconstruction.md) before interpreting any hazard ratio.
+
 ## 5. Headless: a one-shot cached QC summary
 
 ```sh
