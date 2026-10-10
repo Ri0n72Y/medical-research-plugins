@@ -22,8 +22,9 @@
     "web": "node scripts/cli.mjs web",
     "headless:qc": "node scripts/cli.mjs headless",
     "acp": "node scripts/cli.mjs acp",
-    "test": "node --test .dsh/skills/capn1-aml-public-reconstruction/tests/m1-source-cache.test.mjs .dsh/skills/capn1-aml-public-reconstruction/tests/m2-processing.test.mjs scripts/cli.test.mjs",
-    "data:prepare": "node scripts/cli.mjs prepare"
+    "test": "node --test .dsh/skills/capn1-aml-public-reconstruction/tests/m1-source-cache.test.mjs .dsh/skills/capn1-aml-public-reconstruction/tests/m2-processing.test.mjs scripts/cli.test.mjs .dsh/skills/capn1-aml-public-reconstruction/tests/m3-cohort.test.mjs",
+    "data:prepare": "node scripts/cli.mjs prepare",
+    "data:survival:explore": "node scripts/m3-explore.mjs"
   },
   "files": [
     "cordis.patch.yml",
