@@ -2,7 +2,8 @@
 // M3: build a reviewable patient-level candidate cohort. No implicit approval.
 import { createHash, randomUUID } from 'node:crypto'
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
-import { dirname, join, resolve } from 'node:path'
+import { join, resolve, sep } from 'node:path'
+import { clinicalDigest } from './lib/gdc.mjs'
 import { fileURLToPath } from 'node:url'
 
 const validDay = value => {
@@ -92,9 +93,18 @@ export async function buildCohort(workspace) {
   const study = join(workspace, 'study')
   const source = await loadJson(join(study, 'source.json'))
   const processed = await loadJson(join(study, 'processed.json'))
-  const cases = await loadJson(resolve(workspace, source.clinical))
-  const path = resolve(workspace, fromOutputs(processed, 'capn1-expression.tsv'))
-  const content = await readFile(path, 'utf8')
+  const inside = name => {
+    if (!name || typeof name !== 'string' || name.includes('\\\\')) throw Error('Invalid M3 input path')
+    const path = resolve(workspace, name)
+    if (!path.startsWith(resolve(workspace) + sep)) throw Error('M3 input escaped workspace')
+    return path
+  }
+  const cases = await loadJson(inside(source.clinical))
+  if (clinicalDigest(cases) !== source.clinical_digest) throw Error('M3 clinical source digest mismatch')
+  const name = fromOutputs(processed, 'capn1-expression.tsv')
+  const entry = processed.outputs.find(x => x.path === name)
+  const content = await readFile(inside(name), 'utf8')
+  if (!entry.sha256 || sha256(content) !== entry.sha256) throw Error('M3 CAPN1 input checksum mismatch')
   const { audit, eligible, clinicalCases, files } = constructCohort(source, processed, cases, tsvTable(content))
   if (eligible.length < 3) throw Error('Too few eligible patient records for exploratory analysis')
   const id = `m3-${Date.now()}-${randomUUID().slice(0, 8)}`
