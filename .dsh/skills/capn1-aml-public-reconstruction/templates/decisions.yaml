@@ -1,19 +1,19 @@
 decisions:
   D1:
     name: CAPN1 high / low grouping
-    status: unresolved
+    status: demo-default
     proposed_default: median
-    selected: null
-    source: researcher
-    rationale: null
+    selected: median
+    source: conventional-demo-default
+    rationale: M3 uses median TPM of paired eligible cases, not the unknown original cutoff.
 
   D2:
     name: multivariable survival covariates
-    status: unresolved
+    status: demo-default
     proposed_default: no-multivariable-model
-    selected: null
-    source: researcher
-    rationale: null
+    selected: no-multivariable-model
+    source: conventional-demo-default
+    rationale: M3 is unadjusted Cox; adjusted models require declared covariates.
 
   D3:
     name: DEG threshold

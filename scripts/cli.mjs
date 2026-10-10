@@ -30,8 +30,8 @@ export function parseArgs(argv) {
     else if (argv[i] === '--rerun') options.rerun = true
     else throw Error(`Unknown option: ${argv[i]}`)
   }
-  if (command !== 'prepare' && (options.refresh || options.rerun)) {
-    throw Error('--refresh and --rerun are only for prepare')
+  if (command !== 'prepare' && (options.refresh || (options.rerun && command !== 'survival'))) {
+    throw Error('--refresh is only for prepare; --rerun is for prepare or survival')
   }
   return options
 }
@@ -124,6 +124,19 @@ async function ensureWorkspace(workspace, dryRun) {
   await access(skill)
 }
 
+async function runSurvival(options) {
+  await ensureWorkspace(options.workspace, options.dryRun)
+  if (options.dryRun) {
+    console.error('Planned: cached M2 → paired CAPN1 cohort → R survival → M3 artifact cache')
+    return
+  }
+  const { analyze } = await import(pathToFileURL(join(skill, 'scripts/m3-survival.mjs')).href)
+  const result = await analyze(options.workspace, { rerun: options.rerun })
+  console.error('[M3] ' + result.status + ' — ' + result.manifest.id)
+  if (result.status === 'cache-hit') console.error('[CACHE] Reusing verified M3 outputs.')
+  console.log('M3 report: ' + result.manifest.outputs.find(x => x.path.endsWith('/report.md'))?.path)
+}
+
 async function prepareData(options) {
   await ensureWorkspace(options.workspace, options.dryRun)
   if (options.dryRun) {
@@ -156,12 +169,13 @@ function help() {
 
 pnpm run doctor           Check Node/pnpm
 pnpm run web              Deploy research-web as needed and launch DSH Web
-pnpm run data:prepare          Download/cache public GDC data and write M2 QC
+pnpm run data:prepare    Download/cache public GDC data and write M2 QC
+pnpm run survival        Run M3 CAPN1/AML R survival from existing M2
 pnpm run headless:qc      Generate an AI-assisted summary from cached QC
 pnpm run deploy:acp       Deploy the separate ACP profile
 node scripts/cli.mjs acp  Serve ACP JSON-RPC (stdout reserved)
 
-Options: --workspace <path>, --dry-run; prepare also: --refresh, --rerun`)
+Options: --workspace <path>, --dry-run; prepare: --refresh, --rerun; survival: --rerun`)
 }
 export async function main(argv = process.argv.slice(2)) {
   const opt = parseArgs(argv)
@@ -172,6 +186,7 @@ export async function main(argv = process.argv.slice(2)) {
     return
   }
   if (opt.command === 'prepare') return prepareData(opt)
+  if (opt.command === 'survival') return runSurvival(opt)
   if (opt.command === 'deploy') return deploy(opt.mode, opt)
   if (opt.command === 'web' || opt.command === 'headless') {
     await deploy(opt.command, opt, { force: false })

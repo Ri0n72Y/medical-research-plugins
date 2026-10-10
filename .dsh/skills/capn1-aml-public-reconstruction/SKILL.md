@@ -6,7 +6,7 @@ whenToUse: Use when the user wants to initialize, reproduce, continue, inspect, 
 
 # CAPN1 / AML Public Reconstruction
 
-This is the canonical v0 workflow. It is intentionally overfit to one study. Do not generalize it into a biomedical workflow framework while executing it.
+This is the canonical v0 Harness capability demonstration. It is intentionally overfit to one study. Do not generalize it into a biomedical workflow framework while executing it.
 
 ## Core boundary
 
@@ -14,7 +14,7 @@ The researcher owns the science.
 
 You may inspect the workspace, organize evidence, fetch approved public data, call deterministic scientific tools, summarize formal artifacts, and help explore alternatives.
 
-Do not silently choose scientifically material assumptions. Do not turn association into mechanism. Do not use the language model itself as the numerical implementation of statistics or bioinformatics.
+Missing original-paper parameters are not a stop condition: use declared, conventional public substitutes. Do not silently choose scientifically material assumptions. Do not turn association into mechanism. Do not use the language model itself as the numerical implementation of statistics or bioinformatics.
 
 ## First action: inspect, then reuse
 
@@ -117,7 +117,15 @@ Source acquisition can be long-running. Prefer DSH's existing background job sup
 
 When the completed M1 source is available, read `references/m2-operations.md` and use the bundled `scripts/m2-prepare.mjs`. Check `study/processed.json` first; disclose a compatible local processed cache hit. Only use `--rerun` after an explicit reprocessing request; never refetch GDC as part of M2.
 
-Read `qc.md` and `qc.json` before proceeding. M2 retains all cases and files, does not resolve biological sample identity, and does not define a clinical survival endpoint. Stop at the researcher QC gate before analysis.
+Read `qc.md` and `qc.json` before proceeding. M2 retains all cases and files, does not resolve biological sample identity, and does not define a clinical survival endpoint. Read and disclose QC. Continue M3 with declared conservative structural exclusions and conventional survival defaults when source fields support them; stop if the data or assumptions are not valid.
+
+## M3 — CAPN1 expression and survival demonstration
+
+Read docs/m3-expression-survival.md and use scripts/m3-survival.mjs after complete M2 preparation. R with the survival package is required.
+
+Use pnpm run survival, and --rerun only when explicitly requested. M3 does not refetch GDC. Its default records unique case/file mappings, median CAPN1 TPM grouping, GDC OS follow-up, Kaplan–Meier, log-rank, and unadjusted Cox. Inspect cohort.tsv, exclusions.tsv, statistics.tsv and report.md.
+
+The aim is a valid, end-to-end Harness research demonstration, not a perfect reconstruction of Wang et al.'s reported results. Medical significance, biological causality, and experimental validation remain researcher responsibilities.
 
 ## Later canonical stages
 

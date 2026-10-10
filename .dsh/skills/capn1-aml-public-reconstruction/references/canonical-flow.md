@@ -62,15 +62,15 @@ Report:
 
 Mechanical validity checks may be automatic.
 
-Scientifically meaningful exclusion choices belong to the researcher and must be recorded before applying them.
+For demonstration, declared conservative structural exclusions can run automatically and must be audited. Clinical judgments or research-question changes belong to the researcher.
 
 ## Stage 4 — CAPN1 expression and survival
 
 Reuse compatible processed inputs.
 
-D1 must be resolved before grouped CAPN1 survival analysis.
+The demonstration D1 default is eligible-cohort median CAPN1 TPM, with ties in low. Record this method; do not block only because the paper's cutoff is unavailable.
 
-Use established statistical software for survival computation; do not calculate statistics in model text.
+Use established R survival software for Kaplan–Meier, log-rank and unadjusted Cox; do not calculate statistics in model text. Numerical agreement with the original paper is not required.
 
 D2 must be resolved before a formal multivariable model is introduced.
 

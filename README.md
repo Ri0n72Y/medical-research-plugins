@@ -1,8 +1,8 @@
 # Medical Research Plugins for DeepSeek Harness
 
-A DSH-native, human-in-the-loop **CAPN1 / AML public research reconstruction**. Researchers own the scientific decisions; the Agent follows the skill, uses existing DSH tools, and reuses transparent datasets and results stored in the workspace.
+A DSH-native, human-in-the-loop **CAPN1 / AML public research reconstruction and Harness capability demonstration**. Researchers own the scientific decisions; the Agent follows the skill, uses existing DSH tools, and reuses transparent datasets and results stored in the workspace.
 
-This is deliberately a single-study reference implementation, not an autonomous scientist or a generic biomedical analysis platform.
+This is deliberately a single-study example, not an autonomous scientist or a generic biomedical analysis platform. The goal is to demonstrate an end-to-end Harness research workflow, not to match the original paper's unpublished parameters or p-values.
 
 ## Quick start
 
@@ -30,6 +30,16 @@ pnpm run web
 **The profile's original template is copied once, not live-inherited.** On later runs, existing profile data and settings are kept. The bundle uses the official DSH filesystem skill provider; no new Cordis research runtime is installed.
 
 The terminal should print the Web URL. Open it and select the research workspace if the interface asks you to choose a directory. Starting DSH with that working directory provides a default workspace root, but does not guarantee the browser automatically switches to a previously selected session.
+
+### M3: CAPN1 expression and survival
+
+After a **complete** M2 workspace is prepared, install R with the recommended R survival package, then run:
+
+    pnpm run survival
+
+M3 verifies cached M2 inputs, derives an auditable patient-level CAPN1/OS cohort, and uses R to produce Kaplan–Meier, log-rank, and unadjusted Cox results. The run records exclusions, artifacts, package versions, and checksums. A repeated compatible call is cache-hit; pnpm run survival --rerun creates a new version. See [M3 methods](docs/m3-expression-survival.md).
+
+A one-file smoke example is not sufficient to support the statistical study.
 
 ### Configure your model API key
 
@@ -116,7 +126,7 @@ The current source code is under `.dsh/skills/capn1-aml-public-reconstruction/`.
 
 ## Status and tests
 
-Currently implemented: M0 architecture/skill baseline, M1 GDC source cache, M2 expression/clinical tables and QC; plus the DSH profile launcher/deploy wrapper. Statistical analysis, the full research report, and a distributable registry-published plugin remain later work.
+Currently implemented: M0 baseline, M1 GDC source cache, M2 expression/clinical/QC, M3 CAPN1 paired-cohort and R survival, and DSH profile launcher. M3 requires R and full M2 data. DEG, enrichment, immune analysis, full report, and registry-published plugin are later work.
 
 ```sh
 pnpm test
