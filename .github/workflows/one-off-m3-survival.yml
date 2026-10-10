@@ -1,7 +1,6 @@
 name: One-off public CAPN1 survival reconstruction
 on:
-  push:
-    branches: [feat/m3-survival-reconstruction]
+  workflow_dispatch:  # One-off: never fetch 640 MB automatically on a code/documentation push
 permissions:
   contents: read
 jobs:
