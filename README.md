@@ -116,7 +116,9 @@ The current source code is under `.dsh/skills/capn1-aml-public-reconstruction/`.
 
 ## Status and tests
 
-Currently implemented: M0 architecture/skill baseline, M1 GDC source cache, M2 expression/clinical tables and QC; plus the DSH profile launcher/deploy wrapper. Statistical analysis, the full research report, and a distributable registry-published plugin remain later work.
+Currently implemented: M0 architecture/skill baseline, M1 GDC source cache, M2 expression/clinical tables and QC, plus M3 **explicit exploratory** CAPN1–AML survival analysis using R and the DSH launcher.
+
+After `pnpm run data:prepare`, install R (with its recommended `survival` package) and run `pnpm run data:survival:explore`. The script uses the existing M1/M2 cache and writes a Kaplan–Meier curve, log-rank and Cox estimates, and a complete patient eligibility audit under `research-workspace/exploration/capn1-os/`. A second identical invocation reuses those results. This **does not claim paper-exact methods, an approved clinical cohort, or multivariable prognosis**: the original paper's full Methods have not been verified. Read [M3 method and limitations](docs/m3-survival-reconstruction.md). Statistical analysis, the full research report, and a distributable registry-published plugin remain later work.
 
 ```sh
 pnpm test

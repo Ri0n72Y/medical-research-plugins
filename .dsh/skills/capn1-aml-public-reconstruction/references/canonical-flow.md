@@ -66,6 +66,8 @@ Scientifically meaningful exclusion choices belong to the researcher and must be
 
 ## Stage 4 — CAPN1 expression and survival
 
+The existing `scripts/m3-cohort.mjs` and `scripts/m3-survival.R` can produce a strictly **exploratory** patient cohort, Kaplan–Meier curve and univariable Cox sensitivity estimates from current GDC data. Read the bundled `references/m3-operations.md` first. Do not treat its median-TPM cutoff or its censored endpoint reconstruction as exact paper methods; keep D1 and D2 unresolved unless the researcher formally confirms them.
+
 Reuse compatible processed inputs.
 
 D1 must be resolved before grouped CAPN1 survival analysis.

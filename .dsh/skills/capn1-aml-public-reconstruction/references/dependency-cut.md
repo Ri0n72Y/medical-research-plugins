@@ -40,6 +40,10 @@ For every implementation task, use this order:
 | trajectory/audit | DSH session / trajectory | none | no duplicate event system | no |
 | multi-agent review | DSH subagent/workflow | none | optional skill guidance | no |
 
+## M3 provisional survival implementation
+
+R `survival` is now used in the explicitly non-canonical M3 exploratory path, after GDC source caching and M2 preprocessing. Patient eligibility is audited by `scripts/m3-cohort.mjs`, and Kaplan–Meier/log-rank/Cox computation uses `scripts/m3-survival.R` through `pnpm run data:survival:explore`. The scientific decisions D1/D2 remain unresolved; this is not a claim that R version or original cutoff matches the author.
+
 ## Real unresolved capability
 
 M1 did not reveal a need for a new Cordis service. Public source acquisition is currently covered by a thin Node script plus DSH shell/jobs.

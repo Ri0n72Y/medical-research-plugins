@@ -119,6 +119,10 @@ When the completed M1 source is available, read `references/m2-operations.md` an
 
 Read `qc.md` and `qc.json` before proceeding. M2 retains all cases and files, does not resolve biological sample identity, and does not define a clinical survival endpoint. Stop at the researcher QC gate before analysis.
 
+## M3 — Provisional survival (non-canonical)
+
+Only when explicitly requested, use `pnpm run data:survival:explore` after verified M1/M2 and R `survival`. Read `references/m3-operations.md`. No fetch. Median TPM and OS definitions are **unverified reconstruction assumptions**, not the paper's confirmed Methods. Store results in `exploration/`, disclose cache hits, and never mark D1/D2 or cohort approval resolved.
+
 ## Later canonical stages
 
 After M2, follow `references/canonical-flow.md` for researcher-approved cohort, CAPN1 expression and survival, differential expression, enrichment, STRING, immune analysis, reconstruction reporting, and exploration.
