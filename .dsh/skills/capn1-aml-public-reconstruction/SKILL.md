@@ -119,11 +119,9 @@ When the completed M1 source is available, read `references/m2-operations.md` an
 
 Read `qc.md` and `qc.json` before proceeding. M2 retains all cases and files, does not resolve biological sample identity, and does not define a clinical survival endpoint. Stop at the researcher QC gate before analysis.
 
-## M3 — Explicit exploratory survival reconstruction
+## M3 — Provisional survival (non-canonical)
 
-A bounded, **non-canonical** public reconstruction is available through `pnpm run data:survival:explore` after a complete verified M1/M2 cache and installation of R `survival`. It does not fetch data. Read `docs/m3-survival-reconstruction.md` for the exact patient-selection and endpoint assumptions.
-
-The publication's full Methods have not yet been verified. Median TPM cutoff and demographic/follow-up OS rules are **provisional assumptions**, never recovered paper parameters. Keep M3 outputs under `exploration/`; do not mark D1/D2 resolved or a cohort approved. A cache hit must be disclosed. Only create new exploration outputs on input/method change or explicit `--rerun`.
+Only when explicitly requested, use `pnpm run data:survival:explore` after verified M1/M2 and R `survival`. Read `docs/m3-survival-reconstruction.md`. No fetch. Median TPM and OS definitions are **unverified reconstruction assumptions**, not the paper's confirmed Methods. Store results in `exploration/`, disclose cache hits, and never mark D1/D2 or cohort approval resolved.
 
 ## Later canonical stages
 
