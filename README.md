@@ -49,6 +49,16 @@ After M3, install **R/Bioconductor DESeq2** and run:
 
 M4 verifies M2 raw counts and M3 paired CAPN1 high/low cohort, fits DESeq2, and writes full/filter DEG tables, volcano plot, method provenance and immutable cache. The default screen uses FDR < 0.05 and |log2FC| >= 1. This is a conventional methods demonstration, not a reproduction of the paper's exact gene list. See [M4 methods](docs/m4-differential-expression.md).
 
+### M5: GO / KEGG functional enrichment
+
+With a completed M4 DESeq2 run, install Bioconductor `clusterProfiler` and `org.Hs.eg.db` and run:
+
+    pnpm run enrichment
+
+M5 reuses the M4 significant genes and the properly tested M4 universe, maps Ensembl→Entrez IDs, and performs GO BP/MF/CC + KEGG enrichment. KEGG REST annotations are fetched only if absent and saved as immutable, checksum-verified references. `--rerun` reuses cached mappings; `--refresh-kegg` requests fresh KEGG public annotations. Outputs include complete enrichment tables, ID-mapping/QC, visualization, runtime versions and preserved manifests. See [M5 methods](docs/m5-go-kegg-enrichment.md).
+
+The enrichment is a declared **clusterProfiler replacement for original DAVID**, not a claim of identical DAVID analysis or pathways.
+
 ### Configure your model API key
 
 For AI-assisted conversations you must configure a model provider. With the default DeepSeek route, use **`DEEPSEEK_API_KEY`** in the environment that launches DSH, or configure credentials through DSH's model/settings interface.
@@ -134,7 +144,7 @@ The current source code is under `.dsh/skills/capn1-aml-public-reconstruction/`.
 
 ## Status and tests
 
-Currently implemented: M0 baseline, M1 GDC source cache, M2 expression/clinical/QC, M3 CAPN1 paired-cohort and R survival, M4 DESeq2 raw-count differential expression, and DSH profile launcher. M3 requires R and full M2 data. Enrichment, immune analysis, full report, and registry-published plugin are later work.
+Currently implemented: M0 baseline, M1 GDC source cache, M2 expression/clinical/QC, M3 CAPN1 paired-cohort and R survival, M4 DESeq2 raw-count differential expression, M5 GO/KEGG enrichment, and DSH profile launcher. M3 requires R and full M2 data. STRING PPI, immune analysis, full report, and registry-published plugin are later work.
 
 ```sh
 pnpm test

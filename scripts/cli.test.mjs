@@ -13,6 +13,8 @@ test('deploy modes and refresh intent are distinct', () => {
   assert.equal(parseArgs(['headless']).mode, 'headless')
   assert.equal(parseArgs(['prepare', '--refresh', '--rerun']).refresh, true)
   assert.throws(() => parseArgs(['web', '--refresh']), /only for prepare/)
+  assert.throws(() => parseArgs(['deg', '--refresh-kegg']), /only for enrichment/)
+  assert.equal(parseArgs(['enrichment', '--refresh-kegg', '--rerun']).refreshKegg, true)
   assert.throws(() => parseArgs(['deploy', 'unknown']), /Unknown deploy mode/)
 })
 

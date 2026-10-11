@@ -19,7 +19,7 @@ export function parseArgs(argv) {
   if (command === 'deploy' && !profiles[mode]) throw Error(`Unknown deploy mode: ${mode}`)
   const options = {
     command, mode, workspace: join(root, 'research-workspace'),
-    dryRun: false, refresh: false, rerun: false,
+    dryRun: false, refresh: false, rerun: false, refreshKegg: false,
   }
   for (let i = index; i < argv.length; i += 1) {
     if (argv[i] === '--workspace') {
@@ -28,11 +28,13 @@ export function parseArgs(argv) {
     } else if (argv[i] === '--dry-run') options.dryRun = true
     else if (argv[i] === '--refresh') options.refresh = true
     else if (argv[i] === '--rerun') options.rerun = true
+    else if (argv[i] === '--refresh-kegg') options.refreshKegg = true
     else throw Error(`Unknown option: ${argv[i]}`)
   }
-  if (command !== 'prepare' && (options.refresh || (options.rerun && !['survival', 'deg'].includes(command)))) {
-    throw Error('--refresh is only for prepare; --rerun is for prepare, survival or deg')
+  if (command !== 'prepare' && (options.refresh || (options.rerun && !['survival', 'deg', 'enrichment'].includes(command)))) {
+    throw Error('--refresh is only for prepare; --rerun is for prepare, survival, deg or enrichment')
   }
+  if (options.refreshKegg && command !== 'enrichment') throw Error('--refresh-kegg is only for enrichment')
   return options
 }
 
@@ -150,6 +152,21 @@ async function runDeg(options) {
   console.log('M4 report: ' + result.manifest.outputs.find(x => x.path.endsWith('/report.md'))?.path)
 }
 
+async function runEnrichment(options) {
+  await ensureWorkspace(options.workspace, options.dryRun)
+  if (options.dryRun) {
+    console.error('Planned: verify M4 → cached/public KEGG reference → clusterProfiler GO/KEGG → M5')
+    return
+  }
+  const { enrich } = await import(pathToFileURL(join(skill, 'scripts/m5-enrich.mjs')).href)
+  const result = await enrich(options.workspace, {
+    rerun: options.rerun, refreshKegg: options.refreshKegg,
+  })
+  console.error('[M5] ' + result.status + ' — ' + result.manifest.id)
+  if (result.status === 'cache-hit') console.error('[CACHE] Reusing verified M5 GO/KEGG outputs.')
+  console.log('M5 report: ' + result.manifest.outputs.find(x => x.path.endsWith('/report.md'))?.path)
+}
+
 async function prepareData(options) {
   await ensureWorkspace(options.workspace, options.dryRun)
   if (options.dryRun) {
@@ -185,11 +202,12 @@ pnpm run web              Deploy research-web as needed and launch DSH Web
 pnpm run data:prepare    Download/cache public GDC data and write M2 QC
 pnpm run survival        Run M3 CAPN1/AML R survival from existing M2
 pnpm run deg             Run M4 DESeq2 DEG from cached M2/M3
+pnpm run enrichment      Run M5 GO/KEGG ORA from cached M4
 pnpm run headless:qc      Generate an AI-assisted summary from cached QC
 pnpm run deploy:acp       Deploy the separate ACP profile
 node scripts/cli.mjs acp  Serve ACP JSON-RPC (stdout reserved)
 
-Options: --workspace <path>, --dry-run; prepare: --refresh, --rerun; survival/deg: --rerun`)
+Options: --workspace <path>, --dry-run; prepare: --refresh, --rerun; survival/deg/enrichment: --rerun; enrichment: --refresh-kegg`)
 }
 export async function main(argv = process.argv.slice(2)) {
   const opt = parseArgs(argv)
@@ -202,6 +220,7 @@ export async function main(argv = process.argv.slice(2)) {
   if (opt.command === 'prepare') return prepareData(opt)
   if (opt.command === 'survival') return runSurvival(opt)
   if (opt.command === 'deg') return runDeg(opt)
+  if (opt.command === 'enrichment') return runEnrichment(opt)
   if (opt.command === 'deploy') return deploy(opt.mode, opt)
   if (opt.command === 'web' || opt.command === 'headless') {
     await deploy(opt.command, opt, { force: false })
