@@ -30,8 +30,8 @@ export function parseArgs(argv) {
     else if (argv[i] === '--rerun') options.rerun = true
     else throw Error(`Unknown option: ${argv[i]}`)
   }
-  if (command !== 'prepare' && (options.refresh || (options.rerun && command !== 'survival'))) {
-    throw Error('--refresh is only for prepare; --rerun is for prepare or survival')
+  if (command !== 'prepare' && (options.refresh || (options.rerun && !['survival', 'deg'].includes(command)))) {
+    throw Error('--refresh is only for prepare; --rerun is for prepare, survival or deg')
   }
   return options
 }
@@ -137,6 +137,19 @@ async function runSurvival(options) {
   console.log('M3 report: ' + result.manifest.outputs.find(x => x.path.endsWith('/report.md'))?.path)
 }
 
+async function runDeg(options) {
+  await ensureWorkspace(options.workspace, options.dryRun)
+  if (options.dryRun) {
+    console.error('Planned: verify cached M2 + M3 → DESeq2 counts → M4 outputs')
+    return
+  }
+  const { analyzeDeg } = await import(pathToFileURL(join(skill, 'scripts/m4-deg.mjs')).href)
+  const result = await analyzeDeg(options.workspace, { rerun: options.rerun })
+  console.error('[M4] ' + result.status + ' — ' + result.manifest.id)
+  if (result.status === 'cache-hit') console.error('[CACHE] Reusing verified M4 DEG outputs.')
+  console.log('M4 report: ' + result.manifest.outputs.find(x => x.path.endsWith('/report.md'))?.path)
+}
+
 async function prepareData(options) {
   await ensureWorkspace(options.workspace, options.dryRun)
   if (options.dryRun) {
@@ -171,11 +184,12 @@ pnpm run doctor           Check Node/pnpm
 pnpm run web              Deploy research-web as needed and launch DSH Web
 pnpm run data:prepare    Download/cache public GDC data and write M2 QC
 pnpm run survival        Run M3 CAPN1/AML R survival from existing M2
+pnpm run deg             Run M4 DESeq2 DEG from cached M2/M3
 pnpm run headless:qc      Generate an AI-assisted summary from cached QC
 pnpm run deploy:acp       Deploy the separate ACP profile
 node scripts/cli.mjs acp  Serve ACP JSON-RPC (stdout reserved)
 
-Options: --workspace <path>, --dry-run; prepare: --refresh, --rerun; survival: --rerun`)
+Options: --workspace <path>, --dry-run; prepare: --refresh, --rerun; survival/deg: --rerun`)
 }
 export async function main(argv = process.argv.slice(2)) {
   const opt = parseArgs(argv)
@@ -187,6 +201,7 @@ export async function main(argv = process.argv.slice(2)) {
   }
   if (opt.command === 'prepare') return prepareData(opt)
   if (opt.command === 'survival') return runSurvival(opt)
+  if (opt.command === 'deg') return runDeg(opt)
   if (opt.command === 'deploy') return deploy(opt.mode, opt)
   if (opt.command === 'web' || opt.command === 'headless') {
     await deploy(opt.command, opt, { force: false })

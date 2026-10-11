@@ -125,7 +125,11 @@ Read references/m3-operations.md from the loaded DSH skill resources and use the
 
 Use pnpm run survival, and --rerun only when explicitly requested. M3 does not refetch GDC. Its default records unique case/file mappings, median CAPN1 TPM grouping, GDC OS follow-up, Kaplan–Meier, log-rank, and unadjusted Cox. Inspect cohort.tsv, exclusions.tsv, statistics.tsv and report.md.
 
-The aim is a valid, end-to-end Harness research demonstration, not a perfect reconstruction of Wang et al.'s reported results. Medical significance, biological causality, and experimental validation remain researcher responsibilities.
+The aim is a valid, end-to-end Harness research demonstration, not a perfect reconstruction of Wang et al.'s reported results. The Agent may reason about medical significance using relevant evidence and explicit uncertainty, but must not assert causal biological mechanisms from association alone or claim experimental validation without independent experiments. The researcher retains decision accountability.
+
+## M4 — Differential expression demonstration
+
+Read references/m4-operations.md from loaded skill resources. Use scripts/m4-deg.mjs or pnpm run deg when completed M2/M3 workspace data are available. M4 uses original GDC integer counts, M3 CAPN1 grouping, and R/Bioconductor DESeq2. Default significant gene screen: padj < 0.05 and abs(log2FC) >= 1. Preserve all gene results and their filter/NA status; do not treat CAPN1's expected split difference as independent confirmation. Store immutable formal outputs, with cached reuse by default.
 
 ## Later canonical stages
 

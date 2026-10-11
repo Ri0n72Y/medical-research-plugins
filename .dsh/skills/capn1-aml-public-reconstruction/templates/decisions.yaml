@@ -17,13 +17,15 @@ decisions:
 
   D3:
     name: DEG threshold
-    status: unresolved
+    status: demo-default
     proposed_default:
       fdr_lt: 0.05
       abs_log2fc_gte: 1
-    selected: null
-    source: researcher
-    rationale: null
+    selected:
+      fdr_lt: 0.05
+      abs_log2fc_gte: 1
+    source: conventional-demo-default
+    rationale: Declared post-test screening, not a test of fold change above a threshold.
 
   D4:
     name: STRING confidence

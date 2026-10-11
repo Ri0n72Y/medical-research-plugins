@@ -10,9 +10,13 @@ The v0 project is intentionally overfit. Do not turn it into a general-purpose b
 
 The CAPN1/AML paper is a realistic reference for showing a complete, auditable AI Harness assisted biomedical research process. Do not use matching the paper's unpublished parameters, p-values, or conclusions as acceptance criteria.
 
-Where the original paper is incomplete, apply a declared, scientifically reasonable conventional method and continue. Missing original methods are not an AI capability boundary. The real boundaries are clinical-meaning judgment, inference of biological causality from correlation, and verification of hypotheses without independent experiments.
+Where the original paper is incomplete, apply a declared, scientifically reasonable conventional method and continue. Missing original methods are not an AI capability boundary. AI can assess possible medical significance using effect size, uncertainty, clinical context, and literature. Medical interpretation is not categorically beyond AI, although the researcher remains accountable for decisions. Real evidence limits remain: association does not prove biological causality, and hypotheses lacking independent experiments cannot be independently validated by computation alone.
 
 Evaluate workflow coverage, reproducibility, transparent provenance, scientifically valid computations, and visible human/AI responsibilities.
+
+## M4 scope: DEG
+
+M4 consumes M2 raw unstranded counts and the verified M3 paired CAPN1 high/low cohort. Use official R/Bioconductor DESeq2, preserve all gene tests and NA status, and apply declared FDR/effect-size thresholds only after testing. Do not silently replace raw counts with TPM. Store an immutable result and manifest. Numeric matching with the paper is not required.
 
 ## Source of truth
 

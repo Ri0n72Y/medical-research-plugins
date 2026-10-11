@@ -6,7 +6,7 @@ Status: implementation proposed. Results are a public-data workflow demonstratio
 
 The canonical CAPN1/AML paper supplies the research question and a realistic workflow. Matching unpublished processing details, software versions, cutoffs, or reported p-values is not an acceptance condition. Where a paper detail is missing, choose a documented, conventional public method and continue. An unavailable original parameter is not, by itself, a Harness capability boundary.
 
-The Harness may orchestrate literature, data, cohort preparation, established statistics, plots, comparisons, and transparent interpretation. Statistical association is not evidence of biological causation; the agent cannot replace a researcher's judgment about medical meaning or independently validate hypotheses lacking experiments.
+The Harness may orchestrate literature, data, cohort preparation, established statistics, plots, comparisons, and transparent interpretation. Statistical association is not evidence of biological causation; the agent can support analysis of medical significance with clinical context, but cannot establish biological causality from association or independently validate untested hypotheses.
 
 ## Inputs and prerequisites
 
