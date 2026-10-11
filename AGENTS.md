@@ -18,6 +18,10 @@ Evaluate workflow coverage, reproducibility, transparent provenance, scientifica
 
 M4 consumes M2 raw unstranded counts and the verified M3 paired CAPN1 high/low cohort. Use official R/Bioconductor DESeq2, preserve all gene tests and NA status, and apply declared FDR/effect-size thresholds only after testing. Do not silently replace raw counts with TPM. Store an immutable result and manifest. Numeric matching with the paper is not required.
 
+## M5 scope: functional enrichment
+
+M5 reads verified M4 DEG tables and performs GO BP/MF/CC and KEGG over-representation with public Bioconductor clusterProfiler. Use M4's tested-gene universe, not the whole genome. Ensembl-to-Entrez ID coverage and KEGG database version/snapshot must be auditable. KEGG annotations are cache-first; reruns reuse the reference. This is a declared substitute for the paper's DAVID step, not a numerical reproduction. Empty significant results are valid; do not invent pathways.
+
 ## Source of truth
 
 The project architecture baseline is `docs/architecture.md`.

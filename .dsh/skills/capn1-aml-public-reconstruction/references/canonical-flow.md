@@ -90,9 +90,9 @@ Class: `RECONSTRUCTED`.
 
 The original publication reports DAVID.
 
-v0 may use a pinned public Bioconductor implementation such as clusterProfiler.
+Use public Bioconductor clusterProfiler and org.Hs.eg.db for GO BP/MF/CC and KEGG ORA. Derive the foreground from M4 significant genes; use only genes tested by M4 for the background. Map Ensembl versions to unique Entrez IDs and document mapping loss. Store a SHA-256 checked KEGG annotation snapshot and preserve it by default.
 
-Record this as a method substitution. Do not describe it as the original DAVID execution.
+Read references/m5-operations.md and docs/m5-go-kegg-enrichment.md. Record this as a method substitution and never describe it as original DAVID execution.
 
 ## Stage 7 — STRING PPI
 

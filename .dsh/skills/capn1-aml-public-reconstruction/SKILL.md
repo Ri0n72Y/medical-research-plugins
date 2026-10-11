@@ -131,6 +131,12 @@ The aim is a valid, end-to-end Harness research demonstration, not a perfect rec
 
 Read references/m4-operations.md from loaded skill resources. Use scripts/m4-deg.mjs or pnpm run deg when completed M2/M3 workspace data are available. M4 uses original GDC integer counts, M3 CAPN1 grouping, and R/Bioconductor DESeq2. Default significant gene screen: padj < 0.05 and abs(log2FC) >= 1. Preserve all gene results and their filter/NA status; do not treat CAPN1's expected split difference as independent confirmation. Store immutable formal outputs, with cached reuse by default.
 
+## M5 — GO / KEGG enrichment
+
+Read references/m5-operations.md from the deployed Skill. Use `pnpm run enrichment` or bundled scripts/m5-enrich.mjs after a completed, verified M4 run. Use the M4 tested-gene universe and significant foreground, excluding ambiguous Ensembl-to-Entrez mapping. GO BP/MF/CC and KEGG use clusterProfiler; cached KEGG reference data are immutable and explicitly refreshable.
+
+The original method was DAVID; our implementation is a documented alternative. Keep negative enrichment results, mapping limitations, package versions and complete term tables. Do not infer causality.
+
 ## Later canonical stages
 
 After M2, follow `references/canonical-flow.md` for researcher-approved cohort, CAPN1 expression and survival, differential expression, enrichment, STRING, immune analysis, reconstruction reporting, and exploration.

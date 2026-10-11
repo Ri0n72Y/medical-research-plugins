@@ -1,4 +1,4 @@
-name: CAPN1 M1-M4 checks
+name: CAPN1 M1-M5 checks
 
 on:
   pull_request:
@@ -29,5 +29,8 @@ jobs:
         run: |
           Rscript -e 'if (!requireNamespace("BiocManager", quietly=TRUE)) install.packages("BiocManager", repos="https://cloud.r-project.org")'
           Rscript -e 'if (!requireNamespace("DESeq2", quietly=TRUE)) BiocManager::install("DESeq2", ask=FALSE, update=FALSE, quiet=TRUE); stopifnot(requireNamespace("DESeq2", quietly=TRUE))'
-      - name: Deterministic M1-M4 tests, including real synthetic R analyses
+      - name: Install GO/KEGG enrichment dependencies
+        run: |
+          Rscript -e 'BiocManager::install(c("clusterProfiler", "org.Hs.eg.db"), ask=FALSE, update=FALSE, quiet=TRUE); stopifnot(requireNamespace("clusterProfiler", quietly=TRUE),requireNamespace("org.Hs.eg.db", quietly=TRUE))'
+      - name: Deterministic M1-M5 tests, including offline KEGG and real R enrichment
         run: pnpm test
