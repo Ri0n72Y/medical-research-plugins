@@ -2,7 +2,9 @@ import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
 export function parseTsv(text, required) {
-  const lines = text.trimEnd().split(/\r?\n/)
+  // Drop only record terminators: trimEnd() also erases trailing TABs, which
+  // represent legitimate empty final TSV cells (for example sample_id).
+  const lines = text.replace(/(?:\r?\n)+$/, '').split(/\r?\n/)
   const columns = lines.shift().split('\t')
   if (new Set(columns).size !== columns.length || required.some(name => !columns.includes(name))) {
     throw Error('Missing or duplicate TSV columns: ' + required.join(', '))
