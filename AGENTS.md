@@ -16,7 +16,11 @@ Evaluate workflow coverage, reproducibility, transparent provenance, scientifica
 
 ## M4 scope: DEG
 
-M4 consumes M2 raw unstranded counts and the verified M3 paired CAPN1 high/low cohort. Use official R/Bioconductor DESeq2, preserve all gene tests and NA status, and apply declared FDR/effect-size thresholds only after testing. Do not silently replace raw counts with TPM. Store an immutable result and manifest. Numeric matching with the paper is not required.
+M4 consumes M2 raw unstranded counts and the verified M3 paired CAPN1 high/low cohort. Use mature Python PyDESeq2, preserve all gene tests and NA status, and apply declared FDR/effect-size thresholds only after testing. Do not silently replace raw counts with TPM. Store an immutable result and manifest. Numeric matching with the paper is not required.
+
+## M5 scope: functional enrichment
+
+M5 reads verified M4 DEG tables and performs GO BP/MF/CC and KEGG over-representation with public Python SciPy/Statsmodels with cached human GO/KEGG GMT libraries. Use M4's tested-gene universe, not the whole genome. Ensembl-to-Entrez ID coverage and KEGG database version/snapshot must be auditable. KEGG annotations are cache-first; reruns reuse the reference. This is a declared substitute for the paper's DAVID step, not a numerical reproduction. Empty significant results are valid; do not invent pathways.
 
 ## Source of truth
 
@@ -69,7 +73,7 @@ The only canonical study is CAPN1 / AML.
 
 Use public data only.
 
-Expected public components include TCGA-LAML / GDC plus established R, Bioconductor, and public database tooling as needed for the reconstructed method.
+Expected public components include TCGA-LAML / GDC plus Python 3.11+, lifelines, PyDESeq2, SciPy/Statsmodels and cached public annotation datasets. No R runtime is needed.
 
 Do not add a second disease, biomarker, paper, or generalized study schema simply to prove extensibility.
 

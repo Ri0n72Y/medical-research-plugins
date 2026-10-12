@@ -5,7 +5,7 @@ This stage demonstrates public reconstruction of Wang et al.'s CAPN1/AML researc
 ## Prerequisites
 
 - A complete, verified M2 workspace with study/processed.json, CAPN1 TSV and clinical TSVs.
-- Rscript on PATH with the recommended survival package.
+- python on PATH with the recommended survival package.
 - The one-file GDC smoke artifact cannot support this analysis.
 
 ## Execute and reuse
@@ -21,7 +21,7 @@ This stage demonstrates public reconstruction of Wang et al.'s CAPN1/AML researc
 - Pair by one expression file to one case, excluding duplicate or ambiguous mappings.
 - Use tpm_unstranded CAPN1. High expression means TPM > median among eligible pairs; ties are low.
 - Dead: demographic.days_to_death; alive: maximum usable diagnosis/followup day, right-censored.
-- R survival::survfit, survival::survdiff, unadjusted survival::coxph, Efron ties.
+- Python lifelines survival::survfit, survival::survdiff, unadjusted survival::coxph, Efron ties.
 - Preserve all input/output digests, exclusions, R and package versions.
 
 These are transparent demonstration choices, not claims about the paper's unpublished methods. Biological causation, medical significance, and experimental verification require independent scientific judgment and evidence.

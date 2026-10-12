@@ -22,10 +22,11 @@
     "web": "node scripts/cli.mjs web",
     "headless:qc": "node scripts/cli.mjs headless",
     "acp": "node scripts/cli.mjs acp",
-    "test": "node --test .dsh/skills/capn1-aml-public-reconstruction/tests/m1-source-cache.test.mjs .dsh/skills/capn1-aml-public-reconstruction/tests/m2-processing.test.mjs scripts/cli.test.mjs .dsh/skills/capn1-aml-public-reconstruction/tests/m3-survival.test.mjs .dsh/skills/capn1-aml-public-reconstruction/tests/m4-deg.test.mjs",
+    "test": "node --test .dsh/skills/capn1-aml-public-reconstruction/tests/m1-source-cache.test.mjs .dsh/skills/capn1-aml-public-reconstruction/tests/m2-processing.test.mjs scripts/cli.test.mjs .dsh/skills/capn1-aml-public-reconstruction/tests/m3-survival.test.mjs .dsh/skills/capn1-aml-public-reconstruction/tests/m4-deg.test.mjs .dsh/skills/capn1-aml-public-reconstruction/tests/m5-enrichment.test.mjs",
     "data:prepare": "node scripts/cli.mjs prepare",
     "survival": "node scripts/cli.mjs survival",
-    "deg": "node scripts/cli.mjs deg"
+    "deg": "node scripts/cli.mjs deg",
+    "enrichment": "node scripts/cli.mjs enrichment"
   },
   "files": [
     "cordis.patch.yml",

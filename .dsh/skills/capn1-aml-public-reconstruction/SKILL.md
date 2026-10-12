@@ -121,7 +121,7 @@ Read `qc.md` and `qc.json` before proceeding. M2 retains all cases and files, do
 
 ## M3 — CAPN1 expression and survival demonstration
 
-Read references/m3-operations.md from the loaded DSH skill resources and use the bundled scripts/m3-survival.mjs after complete M2 preparation. R with the survival package is required.
+Read references/m3-operations.md from the loaded DSH skill resources and use the bundled scripts/m3-survival.mjs after complete M2 preparation. Python with lifelines is required.
 
 Use pnpm run survival, and --rerun only when explicitly requested. M3 does not refetch GDC. Its default records unique case/file mappings, median CAPN1 TPM grouping, GDC OS follow-up, Kaplan–Meier, log-rank, and unadjusted Cox. Inspect cohort.tsv, exclusions.tsv, statistics.tsv and report.md.
 
@@ -129,7 +129,13 @@ The aim is a valid, end-to-end Harness research demonstration, not a perfect rec
 
 ## M4 — Differential expression demonstration
 
-Read references/m4-operations.md from loaded skill resources. Use scripts/m4-deg.mjs or pnpm run deg when completed M2/M3 workspace data are available. M4 uses original GDC integer counts, M3 CAPN1 grouping, and R/Bioconductor DESeq2. Default significant gene screen: padj < 0.05 and abs(log2FC) >= 1. Preserve all gene results and their filter/NA status; do not treat CAPN1's expected split difference as independent confirmation. Store immutable formal outputs, with cached reuse by default.
+Read references/m4-operations.md from loaded skill resources. Use scripts/m4-deg.mjs or pnpm run deg when completed M2/M3 workspace data are available. M4 uses original GDC integer counts, M3 CAPN1 grouping, and Python PyDESeq2. Default significant gene screen: padj < 0.05 and abs(log2FC) >= 1. Preserve all gene results and their filter/NA status; do not treat CAPN1's expected split difference as independent confirmation. Store immutable formal outputs, with cached reuse by default.
+
+## M5 — GO / KEGG enrichment
+
+Read references/m5-operations.md from the deployed Skill. Use `pnpm run enrichment` or bundled scripts/m5-enrich.mjs after a completed, verified M4 run. Use the M4 tested-gene universe and significant foreground, excluding ambiguous Ensembl-to-Entrez mapping. GO BP/MF/CC and KEGG use Python SciPy with BH adjustment; cached KEGG reference data are immutable and explicitly refreshable.
+
+The original method was DAVID; our implementation is a documented alternative. Keep negative enrichment results, mapping limitations, package versions and complete term tables. Do not infer causality.
 
 ## Later canonical stages
 

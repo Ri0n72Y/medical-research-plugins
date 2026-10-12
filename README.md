@@ -1,5 +1,19 @@
 # Medical Research Plugins for DeepSeek Harness
 
+## Python-only scientific execution
+
+M3–M5 now run on Python 3.11+, without R, Rscript, or Bioconductor. Install the scientific packages once:
+
+```sh
+python -m pip install -r requirements.txt
+pnpm run survival
+pnpm run deg
+pnpm run enrichment
+```
+
+M3 uses lifelines for KM/log-rank/Cox; M4 uses PyDESeq2 on raw integer counts; M5 uses SciPy hypergeometric + Statsmodels BH with immutable Enrichr human GO/KEGG GMT references. This is a documented method migration, not a guarantee of identical numerical results versus the old R programs or the paper.
+
+
 A DSH-native, human-in-the-loop **CAPN1 / AML public research reconstruction and Harness capability demonstration**. Researchers own the scientific decisions; the Agent follows the skill, uses existing DSH tools, and reuses transparent datasets and results stored in the workspace.
 
 This is deliberately a single-study example, not an autonomous scientist or a generic biomedical analysis platform. The goal is to demonstrate an end-to-end Harness research workflow, not to match the original paper's unpublished parameters or p-values.
@@ -33,7 +47,7 @@ The terminal should print the Web URL. Open it and select the research workspace
 
 ### M3: CAPN1 expression and survival
 
-After a **complete** M2 workspace is prepared, install R with the recommended R survival package, then run:
+After a **complete** M2 workspace is prepared, install R with the recommended Python lifelines survival package, then run:
 
     pnpm run survival
 
@@ -43,11 +57,21 @@ A one-file smoke example is not sufficient to support the statistical study.
 
 ### M4: Differential expression
 
-After M3, install **R/Bioconductor DESeq2** and run:
+After M3, install **Python PyDESeq2** and run:
 
     pnpm run deg
 
 M4 verifies M2 raw counts and M3 paired CAPN1 high/low cohort, fits DESeq2, and writes full/filter DEG tables, volcano plot, method provenance and immutable cache. The default screen uses FDR < 0.05 and |log2FC| >= 1. This is a conventional methods demonstration, not a reproduction of the paper's exact gene list. See [M4 methods](docs/m4-differential-expression.md).
+
+### M5: GO / KEGG functional enrichment
+
+With a completed M4 DESeq2 run, install Python `SciPy/Statsmodels` and `org.Hs.eg.db` and run:
+
+    pnpm run enrichment
+
+M5 reuses the M4 significant genes and the properly tested M4 universe, maps Ensembl→Entrez IDs, and performs GO BP/MF/CC + KEGG enrichment. KEGG REST annotations are fetched only if absent and saved as immutable, checksum-verified references. `--rerun` reuses cached mappings; `--refresh-kegg` requests fresh KEGG public annotations. Outputs include complete enrichment tables, ID-mapping/QC, visualization, runtime versions and preserved manifests. See [M5 methods](docs/m5-go-kegg-enrichment.md).
+
+M5 keeps Python for GO/KEGG statistical calculations and uses Python 3 (standard library) for SVG chart generation.\n\nThe enrichment is a declared **SciPy/Statsmodels replacement for original DAVID**, not a claim of identical DAVID analysis or pathways.
 
 ### Configure your model API key
 
@@ -134,7 +158,7 @@ The current source code is under `.dsh/skills/capn1-aml-public-reconstruction/`.
 
 ## Status and tests
 
-Currently implemented: M0 baseline, M1 GDC source cache, M2 expression/clinical/QC, M3 CAPN1 paired-cohort and R survival, M4 DESeq2 raw-count differential expression, and DSH profile launcher. M3 requires R and full M2 data. Enrichment, immune analysis, full report, and registry-published plugin are later work.
+Currently implemented: M0 baseline, M1 GDC source cache, M2 expression/clinical/QC, M3 CAPN1 paired-cohort and Python lifelines survival, M4 DESeq2 raw-count differential expression, M5 GO/KEGG enrichment, and DSH profile launcher. M3 requires R and full M2 data. STRING PPI, immune analysis, full report, and registry-published plugin are later work.
 
 ```sh
 pnpm test

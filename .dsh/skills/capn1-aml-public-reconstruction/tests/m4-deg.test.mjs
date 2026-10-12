@@ -45,7 +45,7 @@ async function fixture() {
   const c = await item(m3Root, 'cohort.tsv', asTsv(['case_id','file_id','group'], cases))
   const source = { status: 'complete', digest: 'demo-gdc' }
   const m2 = { status: 'complete', id: 'm2-fixture', source_digest: source.digest, outputs: [a,b] }
-  const m3 = { status: 'complete', id: 'm3-fixture', implementation: 'capn1-m3-survival-demo-v1',
+  const m3 = { status: 'complete', id: 'm3-fixture', implementation: 'capn1-m3-python-lifelines-v1',
     m2_id: m2.id, source_digest: source.digest, outputs: [c] }
   await writeFile(join(root, 'study/source.json'), JSON.stringify(source))
   await writeFile(join(root, 'study/processed.json'), JSON.stringify(m2))
@@ -68,16 +68,15 @@ test('M4 fails on incompatible M3 lineage or missing/corrupt M2 counts', async (
   await writeFile(join(root, m2Root, 'counts-unstranded.tsv'), 'tampered')
   await assert.rejects(analyzeDeg(root), /checksum mismatch/)
 })
-const haveR = spawnSync('Rscript', [
-  '-e', 'quit(status=if (requireNamespace("DESeq2", quietly=TRUE)) 0 else 1)',
-], { encoding: 'utf8' }).status === 0
-test('M4 runs real DESeq2 on synthetic counts, caches results, preserves pointer on failure', {
-  skip: !haveR && 'R/DESeq2 unavailable; CI must provision DESeq2',
+const python = process.env.PYTHON_BINARY || (process.platform === 'win32' ? 'python' : 'python3')
+const havePython = spawnSync(python, ['-c', 'import pydeseq2, pandas'], { encoding: 'utf8' }).status === 0
+test('M4 runs real PyDESeq2 on synthetic counts, caches results, preserves pointer on failure', {
+  skip: !havePython && 'Python PyDESeq2 must be installed in CI',
 }, async () => {
   const { root, m2Root } = await fixture()
   const initial = await analyzeDeg(root)
   assert.equal(initial.status, 'analyzed')
-  assert.equal(initial.manifest.parameters.method, 'DESeq2')
+  assert.equal(initial.manifest.parameters.method, 'PyDESeq2')
   assert.ok(initial.manifest.runtime.dispersion_fit)
   assert.equal(initial.manifest.groups.high, 5)
   assert.equal(initial.manifest.groups.low, 5)

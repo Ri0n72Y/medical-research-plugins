@@ -11,7 +11,7 @@ The Harness may orchestrate literature, data, cohort preparation, established st
 ## Inputs and prerequisites
 
 1. Run pnpm run data:prepare to obtain a verified complete M2 study/processed.json.
-2. Install R with the recommended survival package; Rscript must be on PATH.
+2. Install Python 3.11+ and requirements.txt (lifelines). Python is not required.
 3. The one-file example under examples/public-gdc-smoke is insufficient for M3.
 4. M3 verifies M2 output SHA-256 digests and active source/processed lineage. It never queries GDC.
 
@@ -49,7 +49,7 @@ Immutable runs/m3-survival/<id>/ contains:
 - cohort-summary.json: sample counts and default methods;
 - statistics.tsv: log-rank and unadjusted Cox statistics;
 - km-steps.tsv and kaplan-meier.svg: figure and underlying curves;
-- runtime.tsv: R and survival package versions;
+- runtime.tsv: Python and survival package versions;
 - report.md: methods, outcomes, and limits;
 - run-manifest.json: lineage and output SHA-256 checksums.
 

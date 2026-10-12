@@ -1,5 +1,8 @@
 # Architecture Baseline
 
+> Runtime update: M3–M5 have been migrated to Python 3.11+ using lifelines, PyDESeq2, SciPy and Statsmodels. The previous R survival / DESeq2 / clusterProfiler code has been retired. Statistical and GO/KEGG annotation differences from that historical implementation are intentional, versioned method substitutions; R is not a runtime prerequisite.
+
+
 Status: **v0 baseline**
 
 This document defines the initial architecture for the CAPN1 / AML medical research skill pack. It deliberately describes a narrow reference implementation rather than a general research platform.

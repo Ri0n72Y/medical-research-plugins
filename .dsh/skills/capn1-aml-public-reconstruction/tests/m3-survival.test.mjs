@@ -6,7 +6,7 @@ import { mkdtemp, mkdir, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { analyze } from '../scripts/m3-survival.mjs'
-import { compileCohort, asTsv } from '../scripts/m3-cohort.mjs'
+import { compileCohort, asTsv, parseTsv } from '../scripts/m3-cohort.mjs'
 
 const cases = Array.from({ length: 6 }, (_, i) => ({
   case_id: 'case-' + (i + 1), vital_status: [0,2,3,5].includes(i) ? 'Dead' : 'Alive',
@@ -86,10 +86,11 @@ async function fixture() {
   }))
   return { root, dir }
 }
-const hasR = spawnSync('Rscript', ['--version'], { encoding: 'utf8' }).status === 0
+const python = process.env.PYTHON_BINARY || (process.platform === 'win32' ? 'python' : 'python3')
+const hasPython = spawnSync(python, ['-c', 'import lifelines, pandas, numpy'], { encoding: 'utf8' }).status === 0
 
-test('M3 R survival generates formal outputs, cache hit, and integrity-safe failure', {
-  skip: !hasR && 'Rscript is not installed (CI provisions R)',
+test('M3 Python lifelines survival generates formal outputs, cache hit, and integrity-safe failure', {
+  skip: !hasPython && 'Python lifelines required in CI',
 }, async () => {
   const { root, dir } = await fixture()
   const first = await analyze(root)
@@ -106,4 +107,29 @@ test('M3 R survival generates formal outputs, cache hit, and integrity-safe fail
   await assert.rejects(analyze(root), /checksum mismatch/)
   const current = JSON.parse(await readFile(join(root, 'study/survival.json'), 'utf8'))
   assert.equal(current.id, first.manifest.id)
+})
+
+
+test('TSV reader preserves empty final column in last GDC row (real 151-file regression)', () => {
+  const columns = ['file_id', 'case_ids', 'case_count', 'sample_id']
+  const rows = Array.from({ length: 151 }, (_, i) => ({
+    file_id: 'file-' + i, case_ids: 'case-' + i,
+    case_count: '1', sample_id: '',
+  }))
+  const tsv = asTsv(columns, rows)
+  assert.equal(tsv.split('\n')[151].split('\t').length, 4)
+  for (const text of [tsv, tsv.replaceAll('\n', '\r\n'), tsv.trimEnd().replace(/\t*$/, '\t')]) {
+    const parsed = parseTsv(text, columns)
+    assert.equal(parsed.length, 151)
+    assert.equal(parsed[150].file_id, 'file-150')
+    assert.equal(parsed[150].sample_id, '')
+  }
+})
+
+test('TSV reader preserves other final empty GDC fields and header-only tables', () => {
+  const fields = ['case_id', 'diagnosis_id', 'eln_risk_classification']
+  const data = asTsv(fields, [{ case_id: 'case-1', diagnosis_id: 'dx-1', eln_risk_classification: '' }])
+  assert.equal(parseTsv(data, fields)[0].eln_risk_classification, '')
+  assert.deepEqual(parseTsv(fields.join('\t') + '\n', fields), [])
+  assert.throws(() => parseTsv('x\ty\n1\n', ['x', 'y']), /Malformed TSV line 2/)
 })
