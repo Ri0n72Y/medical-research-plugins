@@ -9,13 +9,16 @@ This document defines the initial architecture for the CAPN1 / AML medical resea
 
 ## 0. Demonstration-first scientific contract
 
+M6 adds version-pinned STRING human functional associations, Python NetworkX graph analysis and immutable full query/response provenance, without changing upstream GDC results. D4 confidence is a required explicit run setting, not an implicitly approved default. See [M6](m6-string-ppi.md).
+
+
 The CAPN1/AML paper is a case for showing an end-to-end AI Harness assisted biomedical workflow. This is not a numerical replication or a test of the authors' p-values. Unknown paper details should use documented, conventional public substitutes, not block execution.
 
 Success means workflow coverage, correct deterministic scientific computation, provenance and explicit human/AI responsibilities. The Harness can evaluate possible medical significance using statistical, clinical and literature evidence; this is not an absolute capability boundary. The researcher remains responsible for clinical or scientific decisions. Statistical association alone cannot establish biological causality, and experimental validation requires independent evidence.
 
 Declared demonstration defaults (median CAPN1 split, conservative case pairing, valid censoring rule, unadjusted Cox) can run without repetitive researcher questions. Unsafe clinical assumptions and changes to the research question still require review.
 
-M4 uses raw GDC counts and official DESeq2 to compare the M3 median-TPM CAPN1 groups. It writes a full/filtered DEG table with independent-filter statuses, volcano figure and versioned provenance. Since grouping is derived from CAPN1 itself, that gene's differential expression cannot be independent validation.
+M4 uses raw GDC counts and Python PyDESeq2 to compare the M3 median-TPM CAPN1 groups. It writes a full/filtered DEG table with independent-filter statuses, volcano figure and versioned provenance. Since grouping is derived from CAPN1 itself, that gene's differential expression cannot be independent validation.
 
 ## 1. Problem statement
 

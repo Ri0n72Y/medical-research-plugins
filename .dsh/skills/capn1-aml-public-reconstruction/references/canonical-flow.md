@@ -98,9 +98,9 @@ Read references/m5-operations.md and docs/m5-go-kegg-enrichment.md. Record this 
 
 Class: `PUBLIC-FIXED` with a parameter decision.
 
-Use the public STRING interface.
+Use the version-pinned STRING 12.5 human API, with Python NetworkX analysis and explicit `network_type=functional`, `add_nodes=0`. Read `references/m6-operations.md`.
 
-D4 must be explicit.
+D4 must be explicit, either as a selected study decision or a per-run `--required-score` integer 0–1000. No implicit 400 approval.
 
 Preserve:
 

@@ -2,16 +2,18 @@
 
 ## Python-only scientific execution
 
-M3–M5 now run on Python 3.11+, without R, Rscript, or Bioconductor. Install the scientific packages once:
+M3–M6 run on Python 3.11+, without R, Rscript, or Bioconductor. Install the scientific packages once:
 
 ```sh
 python -m pip install -r requirements.txt
 pnpm run survival
 pnpm run deg
 pnpm run enrichment
+# After explicitly deciding D4 STRING confidence:
+pnpm run ppi --required-score 400
 ```
 
-M3 uses lifelines for KM/log-rank/Cox; M4 uses PyDESeq2 on raw integer counts; M5 uses SciPy hypergeometric + Statsmodels BH with immutable Enrichr human GO/KEGG GMT references. This is a documented method migration, not a guarantee of identical numerical results versus the old R programs or the paper.
+M3 uses lifelines for KM/log-rank/Cox; M4 uses PyDESeq2 on raw integer counts; M5 uses SciPy hypergeometric + Statsmodels BH with immutable Enrichr human GO/KEGG GMT references; M6 uses STRING API + NetworkX with an explicitly selected confidence score. This is a documented method migration, not a guarantee of identical numerical results versus the old R programs or the paper.
 
 
 A DSH-native, human-in-the-loop **CAPN1 / AML public research reconstruction and Harness capability demonstration**. Researchers own the scientific decisions; the Agent follows the skill, uses existing DSH tools, and reuses transparent datasets and results stored in the workspace.
@@ -47,11 +49,11 @@ The terminal should print the Web URL. Open it and select the research workspace
 
 ### M3: CAPN1 expression and survival
 
-After a **complete** M2 workspace is prepared, install R with the recommended Python lifelines survival package, then run:
+After a **complete** M2 workspace is prepared, install Python 3.11+ dependencies from requirements.txt, then run:
 
     pnpm run survival
 
-M3 verifies cached M2 inputs, derives an auditable patient-level CAPN1/OS cohort, and uses R to produce Kaplan–Meier, log-rank, and unadjusted Cox results. The run records exclusions, artifacts, package versions, and checksums. A repeated compatible call is cache-hit; pnpm run survival --rerun creates a new version. See [M3 methods](docs/m3-expression-survival.md).
+M3 verifies cached M2 inputs, derives an auditable patient-level CAPN1/OS cohort, and uses Python lifelines to produce Kaplan–Meier, log-rank, and unadjusted Cox results. The run records exclusions, artifacts, package versions, and checksums. A repeated compatible call is cache-hit; pnpm run survival --rerun creates a new version. See [M3 methods](docs/m3-expression-survival.md).
 
 A one-file smoke example is not sufficient to support the statistical study.
 
@@ -156,9 +158,13 @@ Our initial pipeline is **public reconstruction**, not a bit-for-bit reproductio
 
 The current source code is under `.dsh/skills/capn1-aml-public-reconstruction/`. The small `cordis.patch.yml` enables the existing DSH `skill-filesystem` provider to load that skill from the checked-out repository. **Keep the checkout in place after deploying this source-linked bundle**; if you move it, rerun deployment from the new location.
 
+## M6 — STRING / NetworkX
+
+Use the existing M4 significant DEG output, not a repeated GDC download. Once D4 is explicitly selected, run `pnpm run ppi --workspace /path/to/study --required-score 400` (400 shown as an *example*, not an approved default). The analysis stores version-pinned STRING responses and an immutable human functional-association graph with full node/edge TSVs, NetworkX metrics and an SVG overview. Repeated compatible runs are cache hits; `--refresh-string` explicitly requests new provider responses. See [M6 methods and contract](docs/m6-string-ppi.md).
+
 ## Status and tests
 
-Currently implemented: M0 baseline, M1 GDC source cache, M2 expression/clinical/QC, M3 CAPN1 paired-cohort and Python lifelines survival, M4 DESeq2 raw-count differential expression, M5 GO/KEGG enrichment, and DSH profile launcher. M3 requires R and full M2 data. STRING PPI, immune analysis, full report, and registry-published plugin are later work.
+Implemented through M5 (full real public TCGA-LAML CI passed). M6 STRING/NetworkX is implemented in this PR, pending CI and a chosen D4 confidence for a formal study run. M7 immune analysis, M8 final report, and a registry-published plugin are later work. No R runtime is required.
 
 ```sh
 pnpm test
