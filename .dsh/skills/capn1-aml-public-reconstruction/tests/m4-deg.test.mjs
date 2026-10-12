@@ -45,7 +45,7 @@ async function fixture() {
   const c = await item(m3Root, 'cohort.tsv', asTsv(['case_id','file_id','group'], cases))
   const source = { status: 'complete', digest: 'demo-gdc' }
   const m2 = { status: 'complete', id: 'm2-fixture', source_digest: source.digest, outputs: [a,b] }
-  const m3 = { status: 'complete', id: 'm3-fixture', implementation: 'capn1-m3-survival-demo-v1',
+  const m3 = { status: 'complete', id: 'm3-fixture', implementation: 'capn1-m3-python-lifelines-v1',
     m2_id: m2.id, source_digest: source.digest, outputs: [c] }
   await writeFile(join(root, 'study/source.json'), JSON.stringify(source))
   await writeFile(join(root, 'study/processed.json'), JSON.stringify(m2))
