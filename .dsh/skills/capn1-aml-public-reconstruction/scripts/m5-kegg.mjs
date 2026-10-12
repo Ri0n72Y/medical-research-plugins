@@ -2,89 +2,86 @@ import { createHash, randomUUID } from 'node:crypto'
 import { mkdir, readFile, writeFile, rename, rm, stat } from 'node:fs/promises'
 import { resolve, join, relative, sep, dirname } from 'node:path'
 
-const urls = {
-  links: 'https://rest.kegg.jp/link/pathway/hsa',
-  titles: 'https://rest.kegg.jp/list/pathway/hsa',
+const libraries = {
+  go_bp: 'GO_Biological_Process_2025',
+  go_mf: 'GO_Molecular_Function_2025',
+  go_cc: 'GO_Cellular_Component_2025',
+  kegg: 'KEGG_2021_Human',
 }
-const hash = value => createHash('sha256').update(value).digest('hex')
-function inside(workspace, subpath) {
-  if (typeof subpath !== 'string' || !subpath || subpath.includes('\\')) throw Error('Invalid reference path')
-  const path = resolve(workspace, subpath)
-  if (!path.startsWith(resolve(workspace) + sep)) throw Error('Reference path escapes workspace')
+const urls = Object.fromEntries(Object.entries(libraries)
+  .map(([key, value]) => [key, 'https://maayanlab.cloud/Enrichr/geneSetLibrary?mode=text&libraryName=' + value]))
+const sha = text => createHash('sha256').update(text).digest('hex')
+function within(workspace, ref) {
+  if (typeof ref !== 'string' || !ref || ref.includes('\\')) throw Error('Invalid annotation path')
+  const path = resolve(workspace, ref)
+  if (!path.startsWith(resolve(workspace) + sep)) throw Error('Annotation path escapes study')
   return path
 }
-async function integrity(workspace, meta) {
-  if (!meta || meta.status !== 'complete' || !meta.id || !meta.files) return false
-  for (const key of ['links','titles']) {
-    const item = meta.files[key]
-    if (!item?.path || !item.sha256 || !Number.isInteger(item.bytes)) return false
+async function valid(workspace, reference) {
+  if (reference?.status !== 'complete' || !reference.files) return false
+  for (const name of Object.keys(libraries)) {
+    const file = reference.files[name]
+    if (!file || !Number.isInteger(file.bytes) || !file.sha256) return false
     try {
-      const path = inside(workspace, item.path)
-      if ((await stat(path)).size !== item.bytes ||
-          hash(await readFile(path, 'utf8')) !== item.sha256) return false
+      const abs = within(workspace, file.path)
+      if ((await stat(abs)).size !== file.bytes ||
+          sha(await readFile(abs, 'utf8')) !== file.sha256) return false
     } catch { return false }
   }
   return true
 }
-export async function acquireKegg(workspace, { refresh = false, download = async url => {
-  const response = await fetch(url, { signal: AbortSignal.timeout(45000) })
-  if (!response.ok) throw Error('KEGG REST returned HTTP ' + response.status)
+export async function acquireLibraries(workspace, { refresh = false, download = async url => {
+  const response = await fetch(url, { signal: AbortSignal.timeout(120000) })
+  if (!response.ok) throw Error('Enrichr library HTTP ' + response.status)
   return response.text()
 } } = {}) {
-  const pointer = join(workspace, 'study/kegg-reference.json')
-  let active
-  try { active = JSON.parse(await readFile(pointer, 'utf8')) }
-  catch (error) { if (error.code !== 'ENOENT') throw error }
-  // Refuse a corrupt existing annotation snapshot: silently refetching would hide provenance drift.
-  if (active && !refresh && !await integrity(workspace, active)) throw Error('Corrupted KEGG reference cache; investigate or request --refresh-kegg')
-  if (active && !refresh) return { status: 'cache-hit', manifest: active }
-  const texts = await Promise.all(['links','titles'].map(key => download(urls[key])))
-  const [links, titles] = texts
-  if (typeof links !== 'string' || typeof titles !== 'string' ||
-      links.split('\n').filter(Boolean).length < 10 ||
-      titles.split('\n').filter(Boolean).length < 10 ||
-      !links.includes('\t') || !titles.includes('\t')) {
-    throw Error('Incomplete public KEGG reference response')
+  const pointer = join(workspace, 'study/gene-set-reference.json')
+  let current
+  try { current = JSON.parse(await readFile(pointer, 'utf8')) }
+  catch (e) { if (e.code !== 'ENOENT') throw e }
+  if (current && !refresh) {
+    if (!await valid(workspace, current)) throw Error('Corrupted gene-set reference cache; use --refresh-kegg explicitly')
+    return { status: 'cache-hit', manifest: current }
   }
-  const id = 'kegg-hsa-' + hash(JSON.stringify(texts)).slice(0, 16)
-  const base = join(workspace, 'data/references/kegg-hsa')
-  const published = join(base, id)
-  const files = Object.fromEntries([['links','links.tsv',links], ['titles','titles.tsv',titles]].map(
-    ([key, name, content]) => [key, {
-      path: relative(workspace, join(published, name)).replaceAll('\\','/'),
-      bytes: Buffer.byteLength(content), sha256: hash(content),
-    }]
-  ))
-  const pending = join(base, '.pending-' + randomUUID())
-  await mkdir(pending, { recursive: true })
-  try {
-    await writeFile(join(pending, 'links.tsv'), links, { flag: 'wx' })
-    await writeFile(join(pending, 'titles.tsv'), titles, { flag: 'wx' })
-    await mkdir(base, { recursive: true })
-    try { await rename(pending, published) }
-    catch (error) {
-      // An identical prior immutable snapshot may exist on explicit refresh.
-      if (error.code !== 'EEXIST' && error.code !== 'ENOTEMPTY') throw error
-      await rm(pending, { recursive: true, force: true })
-      const prior = { status: 'complete', id, files }
-      if (!await integrity(workspace, prior)) throw Error('Existing KEGG snapshot differs from requested content')
+  const names = Object.keys(libraries)
+  const texts = await Promise.all(names.map(name => download(urls[name])))
+  for (let i = 0; i < texts.length; i++) {
+    if (typeof texts[i] !== 'string' || texts[i].split('\n').filter(line => line.split('\t').length >= 4).length < 2) {
+      throw Error('Invalid public GO/KEGG GMT response: ' + names[i])
     }
-    const next = { schema: 1, status: 'complete', id, created_at: new Date().toISOString(),
-      source: 'KEGG REST, Homo sapiens', urls, files }
-    const tmp = pointer + '.tmp-' + randomUUID()
+  }
+  const id = 'human-gmt-' + sha(JSON.stringify(texts)).slice(0, 16)
+  const base = join(workspace, 'data/references/enrichr-human')
+  const published = join(base, id)
+  const stage = join(base, '.pending-' + randomUUID())
+  const files = Object.fromEntries(names.map((name, i) => [name, {
+    path: relative(workspace, join(published, name + '.gmt')).replaceAll('\\', '/'),
+    bytes: Buffer.byteLength(texts[i]), sha256: sha(texts[i]),
+  }]))
+  await mkdir(stage, { recursive: true })
+  try {
+    await Promise.all(names.map((name, i) => writeFile(join(stage, name + '.gmt'), texts[i], { flag: 'wx' })))
+    try { await rename(stage, published) }
+    catch (e) {
+      if (!['EEXIST', 'ENOTEMPTY'].includes(e.code)) throw e
+      await rm(stage, { recursive: true, force: true })
+      if (!await valid(workspace, { status: 'complete', files })) {
+        throw Error('Existing immutable annotation snapshot conflicts')
+      }
+    }
+    const manifest = { schema: 2, status: 'complete', id, created_at: new Date().toISOString(),
+      source: 'Enrichr static human GO/KEGG GMT libraries', libraries, urls, files }
+    const temp = pointer + '.tmp-' + randomUUID()
     await mkdir(dirname(pointer), { recursive: true })
-    await writeFile(tmp, JSON.stringify(next, null, 2) + '\n', { flag: 'wx' })
-    await rename(tmp, pointer)
-    return { status: 'downloaded', manifest: next }
-  } catch (error) {
-    await rm(pending, { recursive: true, force: true })
-    throw error
+    await writeFile(temp, JSON.stringify(manifest, null, 2) + '\n', { flag: 'wx' })
+    await rename(temp, pointer)
+    return { status: 'downloaded', manifest }
+  } catch (e) {
+    await rm(stage, { recursive: true, force: true })
+    throw e
   }
 }
-export async function verifyKegg(workspace, manifest) {
-  if (!await integrity(workspace, manifest)) throw Error('KEGG reference integrity check failed')
-  return {
-    links: inside(workspace, manifest.files.links.path),
-    titles: inside(workspace, manifest.files.titles.path),
-  }
+export async function verifyLibraries(workspace, reference) {
+  if (!await valid(workspace, reference)) throw Error('Gene-set library checksum mismatch')
+  return dirname(within(workspace, reference.files.go_bp.path))
 }

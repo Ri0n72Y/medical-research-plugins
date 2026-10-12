@@ -4,52 +4,37 @@ M5 illustrates the functional enrichment part of the CAPN1/AML paper's research 
 
 ## Inputs and scientific choices
 
-- Uses a SHA-256 verified completed M4 `study/deg.json`, `deg-all.tsv`, and `deg-significant.tsv`. The linked M2 and M3 run IDs must still match the active workspace.
-- The ORA **background universe** is genes with valid M4 adjusted p-values (`test_status == "tested"`) mapped to unique Entrez identifiers, rather than the entire genome. This background matters for statistical interpretation.
-- The DEG foreground is the M4 significant set, also mapped to distinct Entrez IDs. Remove an Ensembl version suffix before mapping with `org.Hs.eg.db`. Exclude unmapped and ambiguous IDs with a table of mapping outcomes; collapse duplicate Entrez IDs deterministically.
-- GO ORA uses `clusterProfiler::enrichGO` separately for **BP, MF and CC** with `OrgDb=org.Hs.eg.db`. KEGG uses `clusterProfiler::enricher` with publicly retrieved human KEGG term/gene assignments and term names. This implements a reproducible *public KEGG annotation substitution* with cached mapping.
-- Both analyses are hypergeometric ORA with **BH FDR** adjustment, a declared 5–500 gene-set size range and a default FDR screen < 0.05. Results preserve all terms returned by the tool, not only significant pathways. Empty results are scientific outcomes, not programming failures.
+- Verify the M2/M3/M4 lineage and SHA-256 checksums. M5 consumes `deg-all.tsv` and `deg-significant.tsv`.
+- The M4 tested genes (`test_status == "tested"` and valid adjusted p-values) are the ORA background; use the declared M4 significant list as foreground.
+- Map GDC `gene_name` to uppercase gene symbols; exclude missing or ambiguous symbols. This is a documented alternative to the former org.Hs.eg.db Ensembl→gene-symbol mapping.
+- Use immutable, publicly downloaded Enrichr human GMT gene-set libraries: `GO_Biological_Process_2025`, `GO_Molecular_Function_2025`, `GO_Cellular_Component_2025`, and `KEGG_2021_Human`.
+- Python SciPy `hypergeom.sf` computes ORA p-values for each library separately; Statsmodels `multipletests(method="fdr_bh")` adjusts within each library. Retain the full term table, including non-significant terms, with gene set sizes 5–500 after background intersection. No significant terms is a valid result.
 
-Official documentation: [clusterProfiler](https://bioconductor.org/packages/release/bioc/html/clusterProfiler.html), [org.Hs.eg.db](https://bioconductor.org/packages/release/data/annotation/html/org.Hs.eg.db.html), [KEGG REST](https://www.kegg.jp/kegg/rest/keggapi.html).
+These sources/implementations are a method substitution for the 2023 paper's DAVID analysis and for the prior R/clusterProfiler prototype. We do not expect identical pathway lists or p-values.
 
 ## Reference cache
 
-The first M5 call downloads two KEGG REST text resources for human gene→pathway links and pathway titles, storing an immutable snapshot under `data/references/kegg-hsa/<id>/`, with the SHA-256 of each response and `study/kegg-reference.json` as the active pointer.
-
-A compatible rerun **never refetches** this reference. A researcher can explicitly request `--refresh-kegg` to retrieve a new reference snapshot. M5's fingerprint includes the reference ID and bytes. Different KEGG snapshots can produce different enriched terms; record this in any comparisons.
-
-If KEGG is unreachable and no valid local reference exists, M5 reports a missing prerequisite rather than inventing pathway mappings or silently skipping KEGG.
+On first run, retrieve and save the four Enrichr GMT datasets under `data/references/enrichr-human/<id>/`. `study/gene-set-reference.json` stores source URLs, per-file SHA-256 digests and a content fingerprint. Reuse the snapshot unless `--refresh-kegg` is explicitly provided (legacy CLI name: refreshes all four GO/KEGG libraries). Never invent missing annotations.
 
 ## Run
 
-Install R/Bioconductor packages using the R/Bioconductor release compatible with the host:
-
-```r
-if (!requireNamespace("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-BiocManager::install(c("clusterProfiler", "org.Hs.eg.db"), ask = FALSE, update = FALSE)
-```
-
-From a workspace with complete M2 → M3 → M4:
-
 ```sh
+python -m pip install -r requirements.txt
 pnpm run enrichment
 pnpm run enrichment --rerun
 pnpm run enrichment --refresh-kegg
 pnpm run enrichment --workspace /absolute/path/to/study
 ```
 
-`--rerun` recomputes only M5 using existing scientific inputs and the cached KEGG mapping. `--refresh-kegg` explicitly requests a reference update.
-
 ## Outputs
 
 Each completed immutable `runs/m5-enrichment/<id>/` includes:
 
-- `gene-id-mapping.tsv`: Ensembl base ID, Entrez mapping, and reason when unresolved.
+- `gene-id-mapping.tsv`: Ensembl base ID, gene-symbol mapping, and reason when unresolved.
 - `go-bp.tsv`, `go-mf.tsv`, `go-cc.tsv`: complete returned GO ORA results by ontology.
 - `kegg.tsv`: KEGG ORA results from the recorded human term mapping.
 - `statistics.tsv`: tested universe, mapped foreground, annotation coverage and significant term counts.
-- `runtime.tsv`: R, clusterProfiler, org.Hs.eg.db and AnnotationDbi versions.
+- `runtime.tsv`: Python, SciPy and Statsmodels versions.
 - `enrichment-top.svg`: top FDR-significant GO/KEGG terms or a clear empty-result display. Rendered using Python 3 standard library from saved R results, without matplotlib.
 - `report.md` and `run-manifest.json`: method decisions, limitations, run IDs, KEGG snapshot, checksums, and results.
 

@@ -6,12 +6,12 @@ import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import { dirname, join, resolve, relative, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { acquireKegg, verifyKegg } from './m5-kegg.mjs'
+import { acquireLibraries, verifyLibraries } from './m5-kegg.mjs'
 import { parseTsv } from './m3-cohort.mjs'
 
 const exec = promisify(execFile)
 const root = dirname(fileURLToPath(import.meta.url))
-const implementation = 'capn1-m5-clusterprofiler-ora-v1'
+const implementation = 'capn1-m5-python-scipy-ora-v1'
 const names = ['gene-id-mapping.tsv','go-bp.tsv','go-mf.tsv','go-cc.tsv','kegg.tsv',
   'statistics.tsv','runtime.tsv','enrichment-top.svg','report.md']
 const sum = value => createHash('sha256').update(value).digest('hex')
@@ -55,14 +55,14 @@ async function readInputs(workspace) {
       m3.m2_id !== m2.id || m4.m2_id !== m2.id || m4.m3_id !== m3.id) {
     throw Error('M5 requires compatible active M2/M3/M4 lineage')
   }
-  if (!String(m4.implementation).startsWith('capn1-m4-deseq2-')) {
+  if (!String(m4.implementation).startsWith('capn1-m4-pydeseq2-')) {
     throw Error('M5 requires completed DESeq2 M4, not another results schema')
   }
   const paths = await checkOutputs(workspace, m4, ['deg-all.tsv','deg-significant.tsv'])
   return { m2, m3, m4, paths }
 }
 async function digestScripts() {
-  const contents = await Promise.all(['m5-enrich.R','m5-enrich.mjs','m5-kegg.mjs','m5-plot.py']
+  const contents = await Promise.all(['m5-enrich.py','m5-enrich.mjs','m5-kegg.mjs','m5-plot.py']
     .map(async name => [name, await readFile(join(root, name), 'utf8')]))
   return sum(JSON.stringify(contents))
 }
@@ -75,25 +75,25 @@ function report(source, summary, runtime, ref, fdr) {
     '- M2: ' + source.m2.id,
     '- M3: ' + source.m3.id,
     '- M4: ' + source.m4.id,
-    '- KEGG mapping: ' + ref.id + ' (' + ref.created_at + ')', '',
+    '- GO/KEGG Enrichr GMT snapshot: ' + ref.id + ' (' + ref.created_at + ')', '',
     '## Evidence summary',
     '- M4 tested gene rows: ' + fmt(summary.tested_gene_rows),
     '- M4 significant gene rows: ' + fmt(summary.significant_gene_rows),
-    '- Background mapped Entrez IDs: ' + fmt(summary.mapped_tested_entrez),
-    '- Significant mapped Entrez IDs: ' + fmt(summary.mapped_significant_entrez),
+    '- Background unique gene symbols: ' + fmt(summary.mapped_tested_symbols),
+    '- Significant mapped gene symbols: ' + fmt(summary.mapped_significant_symbols),
     '- GO BP / MF / CC significant terms: ' +
       ['go_bp_fdr_significant','go_mf_fdr_significant','go_cc_fdr_significant'].map(x => fmt(summary[x])).join(' / '),
     '- KEGG significant pathways: ' + fmt(summary.kegg_fdr_significant), '',
     '## Declared methods',
-    '- GO ORA: Bioconductor clusterProfiler::enrichGO, BP/MF/CC separately, org.Hs.eg.db.',
-    '- KEGG ORA: clusterProfiler::enricher using immutable KEGG REST pathway-to-Entrez mapping.',
-    '- Gene mapping: strip Ensembl version, use org.Hs.eg.db unique Ensembl→Entrez IDs; ambiguous IDs excluded.',
-    '- Background: tested M4 genes with non-NA adjusted p value, mapped to unique Entrez IDs.',
+    '- GO ORA: Python scipy hypergeometric.sf, GO BP/MF/CC Enrichr GMT libraries separately.',
+    '- KEGG ORA: Python scipy hypergeometric.sf, KEGG_2021_Human Enrichr GMT snapshot.',
+    '- Gene mapping: GDC M4 gene_name symbol, ambiguous/missing symbols excluded.',
+    '- Background: tested M4 genes with non-NA adjusted p value, mapped to unique gene symbols.',
     '- Hypergeometric ORA with BH correction; retain all returned term tests; significant FDR < ' + fdr + '.',
     '- Gene-set size after background intersection: 5–500.',
     '- Visualization: Python standard-library SVG renderer.',
-    '- R ' + runtime.r_version + ', clusterProfiler ' + runtime.clusterProfiler +
-      ', org.Hs.eg.db ' + runtime['org.Hs.eg.db'] + '.', '',
+    '- Python ' + runtime.python_version + ', scipy ' + runtime.scipy_version +
+      ', statsmodels ' + runtime.statsmodels_version + '.', '',
     '## Limits',
     '- Annotation databases and KEGG mapping snapshots evolve; filenames and checksums are retained.',
     '- KEGG names and links are public reference substitutions for the original paper’s DAVID database.',
@@ -108,8 +108,8 @@ export async function enrich(workspace, { rerun = false, refreshKegg = false, fd
   download } = {}) {
   if (!(Number.isFinite(fdr) && fdr > 0 && fdr < 1)) throw Error('Invalid M5 FDR threshold')
   const source = await readInputs(workspace)
-  const kegg = await acquireKegg(workspace, { refresh: refreshKegg, ...(download && { download }) })
-  const referencePaths = await verifyKegg(workspace, kegg.manifest)
+  const kegg = await acquireLibraries(workspace, { refresh: refreshKegg, ...(download && { download }) })
+  const referenceDir = await verifyLibraries(workspace, kegg.manifest)
   const scriptDigest = await digestScripts()
   const fingerprint = sum(JSON.stringify({
     implementation, m4: source.m4.id, m4_outputs: source.m4.outputs.map(x => [x.path, x.sha256]),
@@ -132,12 +132,11 @@ export async function enrich(workspace, { rerun = false, refreshKegg = false, fd
   const published = join(base, id)
   await mkdir(stage, { recursive: true })
   try {
-    await exec(process.env.RSCRIPT_BINARY || 'Rscript', [
-      '--vanilla', join(root, 'm5-enrich.R'),
-      source.paths.get('deg-all.tsv'), source.paths.get('deg-significant.tsv'),
-      referencePaths.links, referencePaths.titles, stage, String(fdr),
-    ], { maxBuffer: 2 * 1024 * 1024 })
     const python = process.env.PYTHON_BINARY || (process.platform === 'win32' ? 'python' : 'python3')
+    await exec(python, [join(root, 'm5-enrich.py'),
+      source.paths.get('deg-all.tsv'), source.paths.get('deg-significant.tsv'),
+      referenceDir, stage, String(fdr),
+    ], { maxBuffer: 2 * 1024 * 1024 })
     await exec(python, [join(root, 'm5-plot.py'), stage, String(fdr)],
       { maxBuffer: 1024 * 1024 })
     const summary = Object.fromEntries(parseTsv(await readFile(join(stage, 'statistics.tsv'), 'utf8'),
@@ -153,9 +152,9 @@ export async function enrich(workspace, { rerun = false, refreshKegg = false, fd
     const manifest = { schema: 1, status: 'complete', implementation, id,
       created_at: new Date().toISOString(), source_digest: source.m4.source_digest,
       m2_id: source.m2.id, m3_id: source.m3.id, m4_id: source.m4.id,
-      kegg_reference: kegg.manifest, script_digest: scriptDigest, fingerprint,
-      parameters: { method: 'clusterProfiler GO/KEGG ORA', fdr, background: 'M4 tested genes',
-        keytype: 'ENTREZID', minGSSize: 5, maxGSSize: 500, correction: 'BH' },
+      gene_set_reference: kegg.manifest, script_digest: scriptDigest, fingerprint,
+      parameters: { method: 'Python scipy GO/KEGG ORA', fdr, background: 'M4 tested genes',
+        keytype: 'GDC gene symbol', minGSSize: 5, maxGSSize: 500, correction: 'BH' },
       summary, runtime, outputs }
     await writeFile(join(stage, 'run-manifest.json'), JSON.stringify(manifest, null, 2) + '\n')
     await rename(stage, published)

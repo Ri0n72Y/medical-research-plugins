@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url'
 import { parseTsv, asTsv, compileCohort, loadCohortInputs } from './m3-cohort.mjs'
 
 const exec = promisify(execFile)
-const implementation = 'capn1-m3-survival-demo-v1'
+const implementation = 'capn1-m3-python-lifelines-v1'
 const names = ['cohort.tsv','exclusions.tsv','cohort-summary.json','statistics.tsv',
   'km-steps.tsv','runtime.tsv','kaplan-meier.svg','report.md']
 const scriptDir = dirname(fileURLToPath(import.meta.url))
@@ -27,7 +27,7 @@ function pathIn(workspace, path) {
 }
 async function json(path) { return JSON.parse(await readFile(path, 'utf8')) }
 async function scriptDigest() {
-  const parts = await Promise.all(['m3-cohort.mjs','m3-survival.mjs','m3-survival.R']
+  const parts = await Promise.all(['m3-cohort.mjs','m3-survival.mjs','m3-survival.py']
     .map(async name => [name, await readFile(join(scriptDir, name), 'utf8')]))
   return hashText(JSON.stringify(parts))
 }
@@ -91,7 +91,7 @@ function report(cohort, stats, runtime, processed) {
     '- One expression file per case only; ambiguous file mappings and missing OS are excluded.',
     '- Biospecimen identity/type is not established by the available M2 file-case manifest.',
     '- Cox model is unadjusted; no clinical covariates are silently selected.',
-    '- R ' + runtime.r_version + ', survival ' + runtime.survival_package_version + ' (Efron ties).',
+    '- Python ' + runtime.python_version + ', lifelines ' + runtime.lifelines_version + ' (Efron Cox ties).',
     '- The default choices are documented public substitutes; numeric agreement with the paper is not required.',
     '- Association is not causation; medical significance and experimental validation require researchers.',
     '',
@@ -126,8 +126,8 @@ export async function analyze(workspace, { rerun = false } = {}) {
     await writeFile(join(pending, 'exclusions.tsv'), asTsv(
       ['file_id','case_id','reason'], cohort.exclusions))
     await writeFile(join(pending, 'cohort-summary.json'), JSON.stringify(cohort.summary, null, 2) + '\n')
-    await exec(process.env.RSCRIPT_BINARY || 'Rscript',
-      ['--vanilla', join(scriptDir, 'm3-survival.R'), join(pending, 'cohort.tsv'), pending],
+    const python = process.env.PYTHON_BINARY || (process.platform === 'win32' ? 'python' : 'python3')
+    await exec(python, [join(scriptDir, 'm3-survival.py'), join(pending, 'cohort.tsv'), pending],
       { maxBuffer: 1024 * 1024 })
     const stats = Object.fromEntries(parseTsv(await readFile(join(pending, 'statistics.tsv'), 'utf8'),
       ['metric','value']).map(row => [row.metric, Number(row.value)]))

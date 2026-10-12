@@ -1,4 +1,4 @@
-name: CAPN1 M1-M5 checks
+name: CAPN1 Python M1-M5 checks
 
 on:
   pull_request:
@@ -19,24 +19,16 @@ jobs:
       - uses: pnpm/action-setup@v4
         with:
           version: 11.7.0
-      - uses: r-lib/actions/setup-r@v2
+      - uses: actions/setup-python@v5
         with:
-          r-version: 'release'
-          use-public-rspm: true
-      - name: Ensure survival is available
-        run: Rscript -e 'if (!requireNamespace("survival", quietly=TRUE)) install.packages("survival", repos="https://cloud.r-project.org")'
-      - name: Install Bioconductor DESeq2
+          python-version: '3.11'
+          cache: 'pip'
+      - name: Install Python statistical dependencies
         run: |
-          Rscript -e 'if (!requireNamespace("BiocManager", quietly=TRUE)) install.packages("BiocManager", repos="https://cloud.r-project.org")'
-          Rscript -e 'if (!requireNamespace("DESeq2", quietly=TRUE)) BiocManager::install("DESeq2", ask=FALSE, update=FALSE, quiet=TRUE); stopifnot(requireNamespace("DESeq2", quietly=TRUE))'
-      - name: Install GO/KEGG enrichment dependencies
-        run: |
-          # enrichplot imports CRAN ggtangle, which should be installed after its Bioconductor dependencies.
-          # Keep verbose installation logs: a failure must identify the actual package, not just its dependents.
-          Rscript -e 'BiocManager::install(c("ggfun", "yulab.utils", "ggtree"), ask=FALSE, update=FALSE)'
-          Rscript -e 'install.packages("ggtangle", repos="https://cloud.r-project.org"); stopifnot(requireNamespace("ggtangle", quietly=TRUE))'
-          Rscript -e 'BiocManager::install(c("clusterProfiler", "org.Hs.eg.db"), ask=FALSE, update=FALSE); stopifnot(requireNamespace("clusterProfiler", quietly=TRUE),requireNamespace("org.Hs.eg.db", quietly=TRUE))'
-      - name: Deterministic M1-M5 tests, including offline KEGG and real R enrichment
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -c 'import lifelines, pydeseq2, scipy, statsmodels, pandas; print("Python research dependencies ready")'
+      - name: Deterministic M1-M5 tests with real Python statistical libraries
         run: pnpm test
       # Explicit one-branch online acceptance requested by the researcher. No new workflow.
       - name: Online TCGA-LAML public-data M1-M5 reconstruction

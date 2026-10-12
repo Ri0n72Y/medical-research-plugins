@@ -129,7 +129,7 @@ async function ensureWorkspace(workspace, dryRun) {
 async function runSurvival(options) {
   await ensureWorkspace(options.workspace, options.dryRun)
   if (options.dryRun) {
-    console.error('Planned: cached M2 → paired CAPN1 cohort → R survival → M3 artifact cache')
+    console.error('Planned: cached M2 → paired CAPN1 cohort → Python lifelines survival → M3 artifact cache')
     return
   }
   const { analyze } = await import(pathToFileURL(join(skill, 'scripts/m3-survival.mjs')).href)
@@ -142,7 +142,7 @@ async function runSurvival(options) {
 async function runDeg(options) {
   await ensureWorkspace(options.workspace, options.dryRun)
   if (options.dryRun) {
-    console.error('Planned: verify cached M2 + M3 → DESeq2 counts → M4 outputs')
+    console.error('Planned: verify cached M2 + M3 → PyDESeq2 counts → M4 outputs')
     return
   }
   const { analyzeDeg } = await import(pathToFileURL(join(skill, 'scripts/m4-deg.mjs')).href)
@@ -155,7 +155,7 @@ async function runDeg(options) {
 async function runEnrichment(options) {
   await ensureWorkspace(options.workspace, options.dryRun)
   if (options.dryRun) {
-    console.error('Planned: verify M4 → cached/public KEGG reference → clusterProfiler GO/KEGG → M5')
+    console.error('Planned: verify M4 → cached public GO/KEGG GMT → SciPy ORA → M5')
     return
   }
   const { enrich } = await import(pathToFileURL(join(skill, 'scripts/m5-enrich.mjs')).href)
@@ -200,9 +200,9 @@ function help() {
 pnpm run doctor           Check Node/pnpm
 pnpm run web              Deploy research-web as needed and launch DSH Web
 pnpm run data:prepare    Download/cache public GDC data and write M2 QC
-pnpm run survival        Run M3 CAPN1/AML R survival from existing M2
-pnpm run deg             Run M4 DESeq2 DEG from cached M2/M3
-pnpm run enrichment      Run M5 GO/KEGG ORA from cached M4
+pnpm run survival        Run M3 Python lifelines survival from existing M2
+pnpm run deg             Run M4 Python PyDESeq2 DEG from cached M2/M3
+pnpm run enrichment      Run M5 Python GO/KEGG ORA from cached M4
 pnpm run headless:qc      Generate an AI-assisted summary from cached QC
 pnpm run deploy:acp       Deploy the separate ACP profile
 node scripts/cli.mjs acp  Serve ACP JSON-RPC (stdout reserved)

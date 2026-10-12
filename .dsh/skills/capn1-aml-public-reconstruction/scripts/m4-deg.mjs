@@ -10,7 +10,7 @@ import { parseTsv } from './m3-cohort.mjs'
 
 const exec = promisify(execFile)
 const root = dirname(fileURLToPath(import.meta.url))
-const impl = 'capn1-m4-deseq2-demo-v1'
+const impl = 'capn1-m4-pydeseq2-demo-v1'
 const artifacts = ['deg-all.tsv', 'deg-significant.tsv', 'statistics.tsv',
   'runtime.tsv', 'volcano.svg', 'report.md']
 const shaText = value => createHash('sha256').update(value).digest('hex')
@@ -53,7 +53,7 @@ async function inputs(workspace) {
     m3.source_digest !== source.digest || m3.m2_id !== m2.id) {
     throw Error('M4 requires matching active M2/M3 lineage; rerun previous stages first')
   }
-  if (!String(m3.implementation).startsWith('capn1-m3-survival-')) {
+  if (!String(m3.implementation).startsWith('capn1-m3-python-lifelines-')) {
     throw Error('M4 requires the declared CAPN1 M3 grouping method')
   }
   const m2Files = await checkedOutputs(workspace, m2,
@@ -77,7 +77,7 @@ async function inputs(workspace) {
   return { m2, m3, m2Files, m3Files, groups }
 }
 async function digestScripts() {
-  const contents = await Promise.all(['m4-deg.R', 'm4-deg.mjs', 'm3-cohort.mjs']
+  const contents = await Promise.all(['m4-deg.py', 'm4-deg.mjs', 'm3-cohort.mjs']
     .map(async name => [name, await readFile(join(root, name), 'utf8')]))
   return shaText(JSON.stringify(contents))
 }
@@ -103,11 +103,11 @@ function makeReport({ source, stats, runtime, input, alpha, lfc }) {
     '- Down (high vs low): ' + count('down_genes'), '',
     '## Declared analysis method',
     '- Input: raw GDC unstranded counts, never TPM.',
-    '- DESeq2 ~ group, high versus low; default size-factor normalization, dispersion and Wald test.',
+    '- PyDESeq2 ~group, high versus low; median-ratio normalization, dispersion and Wald test.',
     '- Low-count prefilter: at least 10 reads in at least the smallest group size.',
     '- Default independent filtering and BH adjusted p-values.',
     '- Significant: padj < ' + alpha + ' and |log2 fold change| >= ' + lfc + '.',
-    '- R ' + runtime.r_version + ', DESeq2 ' + runtime.deseq2_version + ', Bioconductor ' + runtime.bioconductor_version + '.',
+    '- Python ' + runtime.python_version + ', PyDESeq2 ' + runtime.pydeseq2_version + '.',
     '- Dispersion fit: ' + runtime.dispersion_fit + ' (mean fallback only when estimates are near minimum).', '',
     '## Scientific limits',
     '- M3 cohort selection requires survival data; this may introduce selection bias in the DEG analysis.',
@@ -141,8 +141,8 @@ export async function analyzeDeg(workspace, { rerun = false, alpha = 0.05, lfc =
   const published = join(base, id)
   await mkdir(pending, { recursive: true })
   try {
-    await exec(process.env.RSCRIPT_BINARY || 'Rscript', [
-      '--vanilla', join(root, 'm4-deg.R'),
+    const python = process.env.PYTHON_BINARY || (process.platform === 'win32' ? 'python' : 'python3')
+    await exec(python, [join(root, 'm4-deg.py'),
       input.m2Files.get('counts-unstranded.tsv'),
       input.m2Files.get('gene-annotation.tsv'),
       input.m3Files.get('cohort.tsv'), pending, String(alpha), String(lfc),
@@ -162,7 +162,7 @@ export async function analyzeDeg(workspace, { rerun = false, alpha = 0.05, lfc =
     const manifest = { schema: 1, status: 'complete', implementation: impl, id,
       created_at: new Date().toISOString(), source_digest: input.m2.source_digest,
       m2_id: input.m2.id, m3_id: input.m3.id, script_digest: scriptHash, fingerprint,
-      parameters: { method: 'DESeq2', design: '~group', comparison: 'high-vs-low',
+      parameters: { method: 'PyDESeq2', design: '~group', comparison: 'high-vs-low',
         alpha, min_abs_log2fc: lfc, min_count: 10, min_replicates: Math.min(...Object.values(input.groups)) },
       groups: input.groups, runtime, summary: stats, outputs }
     await writeFile(join(pending, 'run-manifest.json'), JSON.stringify(manifest, null, 2) + '\n')

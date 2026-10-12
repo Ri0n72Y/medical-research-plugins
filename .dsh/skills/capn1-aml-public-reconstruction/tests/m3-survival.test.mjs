@@ -86,10 +86,11 @@ async function fixture() {
   }))
   return { root, dir }
 }
-const hasR = spawnSync('Rscript', ['--version'], { encoding: 'utf8' }).status === 0
+const python = process.env.PYTHON_BINARY || (process.platform === 'win32' ? 'python' : 'python3')
+const hasPython = spawnSync(python, ['-c', 'import lifelines, pandas, numpy'], { encoding: 'utf8' }).status === 0
 
-test('M3 R survival generates formal outputs, cache hit, and integrity-safe failure', {
-  skip: !hasR && 'Rscript is not installed (CI provisions R)',
+test('M3 Python lifelines survival generates formal outputs, cache hit, and integrity-safe failure', {
+  skip: !hasPython && 'Python lifelines required in CI',
 }, async () => {
   const { root, dir } = await fixture()
   const first = await analyze(root)

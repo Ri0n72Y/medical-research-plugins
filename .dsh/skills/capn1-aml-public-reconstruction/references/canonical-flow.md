@@ -70,7 +70,7 @@ Reuse compatible processed inputs.
 
 The demonstration D1 default is eligible-cohort median CAPN1 TPM, with ties in low. Record this method; do not block only because the paper's cutoff is unavailable.
 
-Use established R survival software for Kaplan–Meier, log-rank and unadjusted Cox; do not calculate statistics in model text. Numerical agreement with the original paper is not required.
+Use established Python lifelines survival software for Kaplan–Meier, log-rank and unadjusted Cox; do not calculate statistics in model text. Numerical agreement with the original paper is not required.
 
 D2 must be resolved before a formal multivariable model is introduced.
 
@@ -78,7 +78,7 @@ A parameter or cohort change creates a new run. Do not overwrite an earlier comp
 
 ## Stage 5 — Differential expression
 
-Use the official deterministic R/Bioconductor DESeq2 implementation on raw M2 counts, grouped by verified M3 paired cohort (never substitute TPM).
+Use the official deterministic Python PyDESeq2 implementation on raw M2 counts, grouped by verified M3 paired cohort (never substitute TPM).
 
 D3 demonstration default: BH adjusted p < 0.05 and abs(log2FC) >= 1. Record this choice; it is not a requirement to recover hidden original thresholds.
 
@@ -90,7 +90,7 @@ Class: `RECONSTRUCTED`.
 
 The original publication reports DAVID.
 
-Use public Bioconductor clusterProfiler and org.Hs.eg.db for GO BP/MF/CC and KEGG ORA. Derive the foreground from M4 significant genes; use only genes tested by M4 for the background. Map Ensembl versions to unique Entrez IDs and document mapping loss. Store a SHA-256 checked KEGG annotation snapshot and preserve it by default.
+Use Python SciPy hypergeometric and Statsmodels BH correction on cached GO BP/MF/CC and KEGG human GMT libraries. Derive the foreground from M4 significant genes; use only genes tested by M4 for the background. Use M4 GDC gene_name symbols; exclude ambiguous/missing symbols and document mapping loss. Store SHA-256 checked human GO/KEGG GMT snapshots and preserve it by default.
 
 Read references/m5-operations.md and docs/m5-go-kegg-enrichment.md. Record this as a method substitution and never describe it as original DAVID execution.
 

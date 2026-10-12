@@ -17,24 +17,16 @@ Official method: https://bioconductor.org/packages/release/bioc/vignettes/DESeq2
 
 ## Installation and execution
 
-R and Bioconductor DESeq2 are prerequisites. Install using the active R/Bioconductor release:
-
-```r
-if (!requireNamespace("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-BiocManager::install("DESeq2", ask = FALSE, update = FALSE)
-```
-
-After an existing complete M2/M3 workspace:
+Python 3.11+ and PyDESeq2 are prerequisites, installed through the repository requirements:
 
 ```sh
+python -m pip install -r requirements.txt
 pnpm run deg
-# Force a fresh M4 run while preserving prior M2/M3 data and outputs:
 pnpm run deg --rerun
 pnpm run deg --workspace /absolute/path/to/study
 ```
 
-The command never invokes a GDC download. It verifies the M2/M3 cached artifact checksums, and will refuse missing or stale lineage.
+PyDESeq2 is a mature Python reimplementation of the negative-binomial DESeq2 workflow. It is not identical to R's DESeq2 implementation. The project records the selected Python method and all versions; comparison to prior R output is not a pass/fail criterion. Low-count prefiltering, raw-count input, BH correction and thresholds remain declared.
 
 ## Outputs and reuse
 
@@ -43,7 +35,7 @@ Each immutable `runs/m4-deg/<id>/` contains:
 - `deg-all.tsv`: every gene, annotated, including NA values and test status.
 - `deg-significant.tsv`: FDR/effect-size filtered results.
 - `statistics.tsv`: total genes, filtered/tested genes, up/down count and thresholds.
-- `runtime.tsv`: R/DESeq2/Bioconductor versions and the actual dispersion fit (including an exceptional fallback).
+- `runtime.tsv`: Python/PyDESeq2 versions and the actual dispersion fit (including an exceptional fallback).
 - `volcano.svg`: annotated, reproducible descriptive visualization.
 - `report.md`: methods, sample counts, key numbers and scientific limitations.
 - `run-manifest.json`: method, input fingerprints and output SHA-256 digests.
