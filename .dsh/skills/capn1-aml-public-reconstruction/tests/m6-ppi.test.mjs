@@ -112,3 +112,24 @@ test('M6 checks researcher D4 selection in workspace and refuses conflicts', asy
   assert.equal(outcome.manifest.parameters.selection, 'study-D4')
   assert.equal(outcome.manifest.summary.metrics.edges, 1)
 })
+
+
+test('M6 singleton mapping never expands to external STRING neighbors', async () => {
+  const f = await fixture()
+  const mapping = asTsv(['queryIndex','queryItem','stringId','preferredName'],
+    [{queryIndex: 0, queryItem: 'TP53', stringId: ids[0], preferredName: 'TP53'}])
+  await writeFile(f.mapping, mapping)
+  // A network response with provider-expanded neighbors must NOT be requested
+  // for a single resolved identifier.
+  await writeFile(f.network, 'THIS NETWORK RESPONSE MUST NOT BE USED')
+  const result = await analyzePpi(f.ws, opts(f))
+  assert.equal(result.manifest.summary.metrics.mapped_proteins, 1)
+  assert.equal(result.manifest.summary.metrics.edges, 0)
+  assert.equal(result.manifest.summary.metrics.isolated_proteins, 1)
+  const nodeRows = parseTsv(await get(f, result.manifest, 'ppi-nodes.tsv'),
+    ['string_id', 'query_gene', 'isolated'])
+  assert.deepEqual(nodeRows.map(x => x.query_gene), ['TP53'])
+  const reqs = JSON.parse(await get(f, result.manifest, 'string-requests.json'))
+  assert.equal(reqs.network_mode, 'singleton-input-only')
+  assert.equal(reqs.mapping.limit, '10')
+})

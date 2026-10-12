@@ -36,6 +36,8 @@ A successful run writes a new immutable `runs/m6-ppi/<run-id>/`, with:
 
 `study/ppi.json` points to the last successfully published M6 run. A compatible subsequent invocation checks hashes and is a cache hit. Explicit `--refresh-string` asks STRING for a new snapshot, recording its new response and run ID. Any failed remote or computational step leaves the prior completed pointer intact.
 
+STRING can automatically add neighbors for a singleton protein query. To honor input-only semantics, a one-mapped-protein run deliberately skips the network endpoint and emits a truthful singleton zero-edge graph; its request record marks this explicitly. For multi-protein network requests, the workflow observes the provider's recommended one-second spacing between calls. Mapping requests ask for up to ten candidates per symbol so ambiguous identifiers can be excluded.
+
 The graph keeps isolated proteins even when STRING returns no interactions. The overview SVG displays up to 60 highest-degree nodes and is not a full network representation; use TSVs for complete information.
 
 ## Validation and boundaries

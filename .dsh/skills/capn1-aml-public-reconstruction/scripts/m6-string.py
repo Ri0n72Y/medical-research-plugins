@@ -250,7 +250,7 @@ def main():
     folder.mkdir(parents=True, exist_ok=True)
     symbols, prepared = prepare_genes(pathlib.Path(args.deg), folder, args.m4_fdr)
     parameters = {"identifiers": "\r".join(symbols), "species": "9606",
-                  "echo_query": "1", "caller_identity": CALLER}
+                  "echo_query": "1", "limit": "10", "caller_identity": CALLER}
     mapping, mode = request("get_string_ids", parameters,
                             pathlib.Path(args.mapping_fixture) if args.mapping_fixture else None)
     (folder / "string-id-mapping-raw.tsv").write_text(mapping, encoding="utf-8")
@@ -259,8 +259,15 @@ def main():
                       "species": "9606", "required_score": str(args.required_score),
                       "network_type": "functional", "add_nodes": "0",
                       "caller_identity": CALLER}
-    network, network_mode = request("network", network_params,
-                                    pathlib.Path(args.network_fixture) if args.network_fixture else None)
+    # STRING can auto-expand singleton queries to ten neighbors. To enforce
+    # input-only semantics, skip the network request for a single mapped ID.
+    if len(accepted) == 1:
+        network, network_mode = "stringId_A\tstringId_B\tscore\n", "singleton-input-only"
+    else:
+        if mode == "live":
+            time.sleep(1.0)  # STRING's recommended spacing between API calls.
+        network, network_mode = request("network", network_params,
+                                        pathlib.Path(args.network_fixture) if args.network_fixture else None)
     (folder / "string-network-raw.tsv").write_text(network, encoding="utf-8")
     edges = normalize_edges(network, set(accepted.values()), args.required_score, folder)
     metrics = graph_report(accepted, labels, edges, folder)
@@ -271,7 +278,7 @@ def main():
          ("required_score_0_to_1000", args.required_score)])
     requests = {
         "provider": ENDPOINT, "source_mode": mode, "mapping": parameters,
-        "network": network_params, "note": "Functional associations, not necessarily physical contacts.",
+        "network": network_params, "network_mode": network_mode, "note": "Functional associations, not necessarily physical contacts.",
     }
     (folder / "string-requests.json").write_text(json.dumps(requests, indent=2) + "\n")
     (folder / "statistics.json").write_text(json.dumps({
