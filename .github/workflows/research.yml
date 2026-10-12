@@ -38,3 +38,43 @@ jobs:
           Rscript -e 'BiocManager::install(c("clusterProfiler", "org.Hs.eg.db"), ask=FALSE, update=FALSE); stopifnot(requireNamespace("clusterProfiler", quietly=TRUE),requireNamespace("org.Hs.eg.db", quietly=TRUE))'
       - name: Deterministic M1-M5 tests, including offline KEGG and real R enrichment
         run: pnpm test
+      # Explicit one-branch online acceptance requested by the researcher. No new workflow.
+      - name: Online TCGA-LAML public-data M1-M5 reconstruction
+        if: github.event_name == 'pull_request' && github.head_ref == 'feat/m5-go-kegg-enrichment'
+        timeout-minutes: 50
+        env:
+          STUDY_DIR: ${{ runner.temp }}/tcga-laml-study
+        run: |
+          pnpm run data:prepare --workspace "$STUDY_DIR"
+          pnpm run survival --workspace "$STUDY_DIR"
+          pnpm run deg --workspace "$STUDY_DIR"
+          pnpm run enrichment --workspace "$STUDY_DIR"
+      - name: Collect public demonstration reports
+        if: always() && github.event_name == 'pull_request' && github.head_ref == 'feat/m5-go-kegg-enrichment'
+        env:
+          STUDY_DIR: ${{ runner.temp }}/tcga-laml-study
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib, shutil
+          root = pathlib.Path(os.environ['STUDY_DIR'])
+          output = pathlib.Path('public-demo-output')
+          output.mkdir(exist_ok=True)
+          for stage, label in [('processed','M2'),('survival','M3'),('deg','M4'),('enrichment','M5')]:
+              p = root / 'study' / (stage + '.json')
+              if not p.is_file():
+                  continue
+              manifest = json.loads(p.read_text())
+              shutil.copyfile(p, output / (label + '-manifest.json'))
+              for item in manifest.get('outputs', []):
+                  src = root / item['path']
+                  if src.is_file() and src.name in ('report.md', 'qc.md', 'statistics.tsv', 'enrichment-top.svg', 'kaplan-meier.svg', 'volcano.svg'):
+                      shutil.copyfile(src, output / (label + '-' + src.name))
+          PY
+      - name: Upload public research summaries
+        if: always() && github.event_name == 'pull_request' && github.head_ref == 'feat/m5-go-kegg-enrichment'
+        uses: actions/upload-artifact@v4
+        with:
+          name: capn1-m1-m5-public-demo
+          path: public-demo-output/
+          if-no-files-found: warn
+          retention-days: 14

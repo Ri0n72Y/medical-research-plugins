@@ -104,6 +104,10 @@ test('M5 clusterProfiler produces GO+offline KEGG outputs, reuses cache, preserv
   const files = first.manifest.outputs
   assert.ok(['go-bp.tsv','go-mf.tsv','go-cc.tsv','kegg.tsv','gene-id-mapping.tsv',
     'enrichment-top.svg'].every(name => files.some(x => x.path.endsWith('/' + name))))
+  const svg = await readFile(join(workspace,
+    files.find(x => x.path.endsWith('/enrichment-top.svg')).path), 'utf8')
+  assert.match(svg, /<svg[^>]+>/)
+  assert.match(svg, /CAPN1-associated GO \/ KEGG enrichment/)
   const count = Object.fromEntries((await readFile(join(workspace,
     files.find(x => x.path.endsWith('/statistics.tsv')).path), 'utf8')).trim().split('\n')
     .slice(1).map(row => row.split('\t')))

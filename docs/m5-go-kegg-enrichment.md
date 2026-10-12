@@ -50,7 +50,7 @@ Each completed immutable `runs/m5-enrichment/<id>/` includes:
 - `kegg.tsv`: KEGG ORA results from the recorded human term mapping.
 - `statistics.tsv`: tested universe, mapped foreground, annotation coverage and significant term counts.
 - `runtime.tsv`: R, clusterProfiler, org.Hs.eg.db and AnnotationDbi versions.
-- `enrichment-top.svg`: top FDR-significant GO/KEGG terms or a clear empty-result display.
+- `enrichment-top.svg`: top FDR-significant GO/KEGG terms or a clear empty-result display. Rendered using Python 3 standard library from saved R results, without matplotlib.
 - `report.md` and `run-manifest.json`: method decisions, limitations, run IDs, KEGG snapshot, checksums, and results.
 
 `study/enrichment.json` points to the last successful run. The previous valid pointer is preserved on a failed run. Compatible repeated runs return `cache-hit`.

@@ -62,7 +62,7 @@ async function readInputs(workspace) {
   return { m2, m3, m4, paths }
 }
 async function digestScripts() {
-  const contents = await Promise.all(['m5-enrich.R','m5-enrich.mjs','m5-kegg.mjs']
+  const contents = await Promise.all(['m5-enrich.R','m5-enrich.mjs','m5-kegg.mjs','m5-plot.py']
     .map(async name => [name, await readFile(join(root, name), 'utf8')]))
   return sum(JSON.stringify(contents))
 }
@@ -91,6 +91,7 @@ function report(source, summary, runtime, ref, fdr) {
     '- Background: tested M4 genes with non-NA adjusted p value, mapped to unique Entrez IDs.',
     '- Hypergeometric ORA with BH correction; retain all returned term tests; significant FDR < ' + fdr + '.',
     '- Gene-set size after background intersection: 5–500.',
+    '- Visualization: Python standard-library SVG renderer.',
     '- R ' + runtime.r_version + ', clusterProfiler ' + runtime.clusterProfiler +
       ', org.Hs.eg.db ' + runtime['org.Hs.eg.db'] + '.', '',
     '## Limits',
@@ -136,6 +137,9 @@ export async function enrich(workspace, { rerun = false, refreshKegg = false, fd
       source.paths.get('deg-all.tsv'), source.paths.get('deg-significant.tsv'),
       referencePaths.links, referencePaths.titles, stage, String(fdr),
     ], { maxBuffer: 2 * 1024 * 1024 })
+    const python = process.env.PYTHON_BINARY || (process.platform === 'win32' ? 'python' : 'python3')
+    await exec(python, [join(root, 'm5-plot.py'), stage, String(fdr)],
+      { maxBuffer: 1024 * 1024 })
     const summary = Object.fromEntries(parseTsv(await readFile(join(stage, 'statistics.tsv'), 'utf8'),
       ['metric','value']).map(row => [row.metric, row.value]))
     const runtime = Object.fromEntries(parseTsv(await readFile(join(stage, 'runtime.tsv'), 'utf8'),

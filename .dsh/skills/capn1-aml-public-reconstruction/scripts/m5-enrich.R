@@ -117,26 +117,4 @@ versions <- data.frame(name = c("r_version", "clusterProfiler", "org.Hs.eg.db",
     if (requireNamespace("BiocManager", quietly = TRUE)) as.character(BiocManager::version()) else "unknown",
     "ORA; BH; per ontology; M4 tested Entrez background"))
 save_result(versions, "runtime.tsv")
-pieces <- lapply(c(go, list(KEGG = kegg_result)), function(x) {
-  x <- x[is.finite(x$p.adjust) & x$p.adjust < alpha, , drop = FALSE]
-  head(x[order(x$p.adjust, x$ID), ], 5)
-})
-labels <- unlist(Map(function(x, label) paste(label, x$Description, sep = ": "),
-  pieces, names(pieces)), use.names = FALSE)
-values <- unlist(lapply(pieces, function(x) -log10(pmax(x$p.adjust, .Machine$double.xmin))),
-  use.names = FALSE)
-svg(file.path(output, "enrichment-top.svg"), width = 11, height = 7)
-tryCatch({
-  if (!length(values)) {
-    plot.new()
-    text(0.5, 0.5, "No GO/KEGG pathways pass the declared FDR threshold")
-  } else {
-    margins <- par("mar")
-    par(mar = c(5, 14, 3, 2))
-    barplot(rev(values), names.arg = rev(substr(labels, 1, 90)),
-      horiz = TRUE, las = 1, cex.names = 0.65,
-      xlab = "-log10 adjusted p-value",
-      main = "CAPN1-associated functional enrichment (illustrative)")
-    par(mar = margins)
-  }
-}, finally = dev.off())
+# Python m5-plot.py reads the saved term tables to render SVG.

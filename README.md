@@ -57,7 +57,7 @@ With a completed M4 DESeq2 run, install Bioconductor `clusterProfiler` and `org.
 
 M5 reuses the M4 significant genes and the properly tested M4 universe, maps Ensembl→Entrez IDs, and performs GO BP/MF/CC + KEGG enrichment. KEGG REST annotations are fetched only if absent and saved as immutable, checksum-verified references. `--rerun` reuses cached mappings; `--refresh-kegg` requests fresh KEGG public annotations. Outputs include complete enrichment tables, ID-mapping/QC, visualization, runtime versions and preserved manifests. See [M5 methods](docs/m5-go-kegg-enrichment.md).
 
-The enrichment is a declared **clusterProfiler replacement for original DAVID**, not a claim of identical DAVID analysis or pathways.
+M5 keeps Bioconductor for GO/KEGG statistical calculations and uses Python 3 (standard library) for SVG chart generation.\n\nThe enrichment is a declared **clusterProfiler replacement for original DAVID**, not a claim of identical DAVID analysis or pathways.
 
 ### Configure your model API key
 
