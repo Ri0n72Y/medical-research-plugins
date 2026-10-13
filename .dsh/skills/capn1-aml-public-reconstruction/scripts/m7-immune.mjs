@@ -54,7 +54,18 @@ async function upstream(workspace) {
   return { m2, m3, m2files, m3files }
 }
 function readD5(text) {
-  const part = text.match(/^  D5:\r?\n((?:    [^\r\n]*\r?\n)*)/m)?.[1] ?? ''
+  // D5 contains a nested YAML "allowed" list. Read through that list instead
+  // of stopping at the first line indented deeper than four spaces.
+  const lines = text.split(/\r?\n/)
+  const start = lines.findIndex(line => /^  D5:\s*$/.test(line))
+  const entries = []
+  if (start >= 0) {
+    for (const line of lines.slice(start + 1)) {
+      if (/^  D\d+:\s*$/.test(line)) break
+      entries.push(line)
+    }
+  }
+  const part = entries.join('\n')
   const state = part.match(/^    status:\s*([\w-]+)\s*$/m)?.[1] ?? null
   const selected = part.match(/^    selected:\s*([\w-]+)\s*$/m)?.[1] ?? null
   if (selected && selected !== 'null' && !['selected', 'approved'].includes(state)) {

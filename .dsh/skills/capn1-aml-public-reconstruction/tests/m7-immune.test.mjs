@@ -93,7 +93,8 @@ test('M7 requires explicit D5 and rejects incompatible decision state or modes',
   const d5=join(f.ws,'study/decisions.yaml')
   await writeFile(d5,'decisions:\n  D5:\n    status: unresolved\n    selected: ssgsea-only\n')
   await assert.rejects(analyzeImmune(f.ws,f.options),/requires selected\/approved/)
-  await writeFile(d5,'decisions:\n  D5:\n    status: selected\n    selected: ssgsea-only\n')
+  // Real D5 template keeps selected *after* a nested allowed list.
+  await writeFile(d5,'decisions:\n  D5:\n    status: selected\n    proposed_default: ssgsea-only\n    allowed:\n      - ssgsea-only\n      - public-substitute\n      - user-supplied-cibersort\n    selected: ssgsea-only\n    source: researcher\n')
   const ok=await analyzeImmune(f.ws,{downloadSignatures:async()=>markers})
   assert.equal(ok.manifest.parameters.selection,'study-D5')
 })
@@ -120,4 +121,15 @@ test('M7 rejects lineage corruption and active-cache damage without replacing po
   m3.m2_id='invalid'
   await writeFile(m3path,JSON.stringify(m3))
   await assert.rejects(analyzeImmune(f.ws,f.options),/matching public M2/)
+})
+
+
+test('M7 parses original D5 allowed-list structure and rejects contradictory mode',async()=>{
+  const f=await setup()
+  const d5=join(f.ws,'study/decisions.yaml')
+  await writeFile(d5,'decisions:\n  D5:\n    status: selected\n' +
+    '    allowed:\n      - ssgsea-only\n      - public-substitute\n' +
+    '    selected: public-substitute\n    source: researcher\n')
+  await assert.rejects(analyzeImmune(f.ws,f.options),/conflicts with D5/)
+  await assert.rejects(analyzeImmune(f.ws,{mode:'public-substitute'}),/Only Python ssGSEA-only/)
 })
