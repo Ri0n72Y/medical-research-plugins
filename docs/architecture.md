@@ -9,6 +9,10 @@ This document defines the initial architecture for the CAPN1 / AML medical resea
 
 ## 0. Demonstration-first scientific contract
 
+M7 adds a narrow Python GSEApy ssGSEA-only path using complete M2 TPM, a paired M3 cohort, a versioned public Enrichr/Panglao marker signature snapshot and explicit D5 selection. It is not CIBERSORT or immune-cell fraction deconvolution. See [M7](m7-immune-ssgsea.md).
+
+
+
 M6 adds version-pinned STRING human functional associations, Python NetworkX graph analysis and immutable full query/response provenance, without changing upstream GDC results. D4 confidence is a required explicit run setting, not an implicitly approved default. See [M6](m6-string-ppi.md).
 
 

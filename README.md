@@ -2,7 +2,7 @@
 
 ## Python-only scientific execution
 
-M3–M6 run on Python 3.11+, without R, Rscript, or Bioconductor. Install the scientific packages once:
+M3–M7 run on Python 3.11+, without R, Rscript, or Bioconductor. Install the scientific packages once:
 
 ```sh
 python -m pip install -r requirements.txt
@@ -11,6 +11,8 @@ pnpm run deg
 pnpm run enrichment
 # After explicitly deciding D4 STRING confidence:
 pnpm run ppi --required-score 400
+# After explicitly selecting a D5 ssGSEA-only route:
+pnpm run immune --immune-mode ssgsea-only
 ```
 
 M3 uses lifelines for KM/log-rank/Cox; M4 uses PyDESeq2 on raw integer counts; M5 uses SciPy hypergeometric + Statsmodels BH with immutable Enrichr human GO/KEGG GMT references; M6 uses STRING API + NetworkX with an explicitly selected confidence score. This is a documented method migration, not a guarantee of identical numerical results versus the old R programs or the paper.
@@ -162,9 +164,13 @@ The current source code is under `.dsh/skills/capn1-aml-public-reconstruction/`.
 
 Use the existing M4 significant DEG output, not a repeated GDC download. Once D4 is explicitly selected, run `pnpm run ppi --workspace /path/to/study --required-score 400` (400 shown as an *example*, not an approved default). The analysis stores version-pinned STRING responses and an immutable human functional-association graph with full node/edge TSVs, NetworkX metrics and an SVG overview. Repeated compatible runs are cache hits; damaged/incompatible existing caches fail without an automatic refetch, and `--refresh-string` explicitly requests new provider responses. STRING `get_string_ids` provides a best match per gene symbol, not a uniqueness guarantee. For study-record D4, set `status: selected` and an integer `selected` together. See [M6 methods and contract](docs/m6-string-ppi.md).
 
+## M7 — Public immune marker ssGSEA (Python)
+
+M7 uses GSEApy on M2 whole-transcriptome TPM and M3 paired cases. Immune-marker sets are sourced from a content-pinned public Enrichr PanglaoDB GMT snapshot. Results are sample-level ssGSEA enrichment scores and exploratory comparisons, **not** inferred immune-cell percentages or licensed CIBERSORT replication. D5 remains unresolved in the template and must be set explicitly. See [M7 operations](docs/m7-immune-ssgsea.md).
+
 ## Status and tests
 
-Implemented through M5 (full real public TCGA-LAML CI passed). M6 STRING/NetworkX is implemented in this PR, pending CI and a chosen D4 confidence for a formal study run. M7 immune analysis, M8 final report, and a registry-published plugin are later work. No R runtime is required.
+Implemented through M5 (full real public TCGA-LAML CI passed). M6 STRING/NetworkX is implemented in this PR, pending CI and a chosen D4 confidence for a formal study run. M7 Python ssGSEA-only path (pending PR/CI), M8 final report, and a registry-published plugin are later work. No R runtime is required.
 
 ```sh
 pnpm test

@@ -66,3 +66,15 @@ test('M6 CLI confidence and refresh controls are isolated from earlier stages', 
   assert.match(run.stderr, /Python NetworkX/)
   assert.doesNotMatch(run.stderr, /GDC download/)
 })
+
+test('M7 CLI requires explicit supported D5 path and isolated signature refresh', () => {
+  assert.equal(parseArgs(['immune','--immune-mode','ssgsea-only']).immuneMode,'ssgsea-only')
+  assert.equal(parseArgs(['immune','--refresh-signatures']).refreshSignatures,true)
+  assert.throws(()=>parseArgs(['deg','--immune-mode','ssgsea-only']),/only for immune/)
+  assert.throws(()=>parseArgs(['ppi','--refresh-signatures']),/only for immune/)
+  const run=spawnSync(process.execPath,[cli,'immune','--dry-run','--immune-mode','ssgsea-only'],
+    {encoding:'utf8'})
+  assert.equal(run.status,0,run.stderr)
+  assert.match(run.stderr,/GSEApy ssGSEA/)
+  assert.doesNotMatch(run.stderr,/download GDC/)
+})

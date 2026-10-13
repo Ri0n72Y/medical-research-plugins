@@ -143,6 +143,12 @@ Read `references/m6-operations.md`. Use `pnpm run ppi` or bundled `scripts/m6-pp
 
 D4 confidence must be explicitly selected: both `status: selected` (or `approved`) and an integer `selected` in the active workspace D4 record, or an explicit `--required-score` per run while unresolved. Reject contradictory D4 state. The proposed value 400 is not already approved. STRING functional associations are not experimental proof of physical binding or causality. A valid empty-edge graph is a legitimate result.
 
+## M7 — Python ssGSEA-only immune-marker analysis
+
+Read `references/m7-operations.md`. Use `pnpm run immune` after a verified M2 whole-TPM matrix and matching M3 paired cohort. The implementation uses GSEApy with a SHA-256-pinned public marker library. The Panglao signature selection is a public exploratory substitute; these scores are not immune-cell proportions.
+
+D5 is unresolved by default. Require an explicit `--immune-mode ssgsea-only` or approved selected D5 in study decisions. Other modes (including CIBERSORT) are not implemented and must not silently downgrade. No GDC refetch or M8 report work. Cache reuse is default; explicit refresh is required when public signatures should be re-fetched.
+
 ## Later canonical stages
 
 After M2, follow `references/canonical-flow.md` for researcher-approved cohort, CAPN1 expression and survival, differential expression, enrichment, STRING, immune analysis, reconstruction reporting, and exploration.
