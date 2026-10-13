@@ -78,3 +78,14 @@ test('M7 CLI requires explicit supported D5 path and isolated signature refresh'
   assert.match(run.stderr,/GSEApy ssGSEA/)
   assert.doesNotMatch(run.stderr,/download GDC/)
 })
+
+test('M8 CLI report flags cannot leak to scientific or acquisition stages',()=>{
+  assert.equal(parseArgs(['report','--require-complete']).requireComplete,true)
+  assert.equal(parseArgs(['report','--rerun']).rerun,true)
+  assert.throws(()=>parseArgs(['immune','--require-complete']),/only for report/)
+  assert.throws(()=>parseArgs(['deg','--require-complete']),/only for report/)
+  const run=spawnSync(process.execPath,[cli,'report','--dry-run'],{encoding:'utf8'})
+  assert.equal(run.status,0,run.stderr)
+  assert.match(run.stderr,/read-only verified M1/)
+  assert.doesNotMatch(run.stderr,/Downloading|refetch/)
+})

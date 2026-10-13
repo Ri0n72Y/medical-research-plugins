@@ -128,7 +128,7 @@ Never represent a public substitute as CIBERSORT reproduction.
 
 ## Stage 9 — Reconstruction report
 
-Build the report from formal workspace artifacts, not chat memory.
+Build the report from formal workspace artifacts, not chat memory. Read references/m8-operations.md. Use the M8 deterministic report generator on checksum-verified active stage outputs. Missing M6/M7 generates an INCOMPLETE DRAFT, not a fabricated summary; present integrity or lineage errors must block.
 
 Separate:
 

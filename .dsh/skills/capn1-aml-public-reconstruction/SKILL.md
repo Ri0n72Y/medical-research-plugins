@@ -149,6 +149,10 @@ Read `references/m7-operations.md`. Use `pnpm run immune` after a verified M2 wh
 
 D5 is unresolved by default. Require an explicit `--immune-mode ssgsea-only` or approved selected D5 in study decisions. Other modes (including CIBERSORT) are not implemented and must not silently downgrade. No GDC refetch or M8 report work. Cache reuse is default; explicit refresh is required when public signatures should be re-fetched.
 
+## M8 — Workspace-grounded public reconstruction report
+
+Read `references/m8-operations.md`. Use `pnpm run report` to assemble only verified M1–M7 workspace results into an immutable Markdown reconstruction report, evidence register and gaps table. Missing runs are plainly labeled `INCOMPLETE DRAFT`; existing corrupt artifacts and mismatched source/M2/M3/M4 lineage are errors. The generator never refetches data, reruns analysis, or invents published effect sizes. Use `--require-complete` to reject missing M6/M7 evidence, and `--rerun` for explicit local regeneration. Even a fully populated report is only `ready_for_researcher_review`, not an approved scientific conclusion.
+
 ## Later canonical stages
 
 After M2, follow `references/canonical-flow.md` for researcher-approved cohort, CAPN1 expression and survival, differential expression, enrichment, STRING, immune analysis, reconstruction reporting, and exploration.

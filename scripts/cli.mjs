@@ -21,6 +21,7 @@ export function parseArgs(argv) {
     command, mode, workspace: join(root, 'research-workspace'),
     dryRun: false, refresh: false, rerun: false, refreshKegg: false,
     refreshString: false, requiredScore: null, refreshSignatures: false, immuneMode: null,
+    requireComplete: false,
   }
   for (let i = index; i < argv.length; i += 1) {
     if (argv[i] === '--workspace') {
@@ -32,6 +33,7 @@ export function parseArgs(argv) {
     else if (argv[i] === '--refresh-kegg') options.refreshKegg = true
     else if (argv[i] === '--refresh-string') options.refreshString = true
     else if (argv[i] === '--refresh-signatures') options.refreshSignatures = true
+    else if (argv[i] === '--require-complete') options.requireComplete = true
     else if (argv[i] === '--immune-mode') {
       if (!argv[i + 1] || argv[i + 1].startsWith('--')) throw Error('Missing --immune-mode value')
       options.immuneMode = argv[++i]
@@ -43,7 +45,7 @@ export function parseArgs(argv) {
     }
     else throw Error(`Unknown option: ${argv[i]}`)
   }
-  if (command !== 'prepare' && (options.refresh || (options.rerun && !['survival', 'deg', 'enrichment'].includes(command)))) {
+  if (command !== 'prepare' && (options.refresh || (options.rerun && !['survival', 'deg', 'enrichment', 'report'].includes(command)))) {
     throw Error('--refresh is only for prepare; --rerun is for prepare, survival, deg or enrichment')
   }
   if (options.refreshKegg && command !== 'enrichment') throw Error('--refresh-kegg is only for enrichment')
@@ -51,6 +53,7 @@ export function parseArgs(argv) {
   if (options.requiredScore !== null && command !== 'ppi') throw Error('--required-score is only for ppi')
   if (options.refreshSignatures && command !== 'immune') throw Error('--refresh-signatures is only for immune')
   if (options.immuneMode !== null && command !== 'immune') throw Error('--immune-mode is only for immune')
+  if (options.requireComplete && command !== 'report') throw Error('--require-complete is only for report')
   return options
 }
 
@@ -215,6 +218,22 @@ async function runImmune(options) {
   console.log('M7 report: ' + result.manifest.outputs.find(x => x.path.endsWith('/report.md'))?.path)
 }
 
+async function runReport(options) {
+  await ensureWorkspace(options.workspace, options.dryRun)
+  if (options.dryRun) {
+    console.error('Planned: read-only verified M1–M7 evidence → M8 synthesis; no upstream analysis or external fetch')
+    console.error('Complete evidence required: ' + options.requireComplete)
+    return
+  }
+  const { generateReconstruction } = await import(pathToFileURL(join(skill, 'scripts/m8-reconstruction.mjs')).href)
+  const result = await generateReconstruction(options.workspace, {
+    rerun: options.rerun, requireComplete: options.requireComplete,
+  })
+  console.error('[M8] ' + result.status + ' (' + result.manifest.report_status + ') — ' + result.manifest.id)
+  if (result.status === 'cache-hit') console.error('[CACHE] Reusing verified local M8 report; no upstream execution.')
+  console.log('M8 report: ' + result.manifest.outputs.find(x => x.path.endsWith('/report.md'))?.path)
+}
+
 async function prepareData(options) {
   await ensureWorkspace(options.workspace, options.dryRun)
   if (options.dryRun) {
@@ -253,11 +272,12 @@ pnpm run deg             Run M4 Python PyDESeq2 DEG from cached M2/M3
 pnpm run enrichment      Run M5 Python GO/KEGG ORA from cached M4
 pnpm run ppi             Run M6 Python STRING/NetworkX from cached M4 (requires D4 score)
 pnpm run immune          Run M7 Python GSEApy ssGSEA from cached M2/M3 (requires D5 mode)
+pnpm run report          Synthesize verified M1–M7 workspace evidence; incomplete stages become draft
 pnpm run headless:qc      Generate an AI-assisted summary from cached QC
 pnpm run deploy:acp       Deploy the separate ACP profile
 node scripts/cli.mjs acp  Serve ACP JSON-RPC (stdout reserved)
 
-Options: --workspace <path>, --dry-run; prepare: --refresh, --rerun; survival/deg/enrichment: --rerun; enrichment: --refresh-kegg; ppi: --required-score 400, --refresh-string; immune: --immune-mode ssgsea-only, --refresh-signatures`)
+Options: --workspace <path>, --dry-run; prepare: --refresh, --rerun; survival/deg/enrichment: --rerun; enrichment: --refresh-kegg; ppi: --required-score 400, --refresh-string; immune: --immune-mode ssgsea-only, --refresh-signatures; report: --require-complete, --rerun`)
 }
 export async function main(argv = process.argv.slice(2)) {
   const opt = parseArgs(argv)
@@ -273,6 +293,7 @@ export async function main(argv = process.argv.slice(2)) {
   if (opt.command === 'enrichment') return runEnrichment(opt)
   if (opt.command === 'ppi') return runPpi(opt)
   if (opt.command === 'immune') return runImmune(opt)
+  if (opt.command === 'report') return runReport(opt)
   if (opt.command === 'deploy') return deploy(opt.mode, opt)
   if (opt.command === 'web' || opt.command === 'headless') {
     await deploy(opt.command, opt, { force: false })
