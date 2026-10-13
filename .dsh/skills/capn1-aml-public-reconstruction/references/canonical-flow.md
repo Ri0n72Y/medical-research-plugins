@@ -113,7 +113,7 @@ Preserve:
 
 ## Stage 8 — Immune analysis
 
-ssGSEA may use a pinned public GSVA implementation and a versioned public gene-signature resource.
+ssGSEA may use the Python GSEApy implementation and a SHA-256-pinned public immune gene-signature snapshot, as a declared substitute for R GSVA. The M7 ssGSEA-only slice reads verified M2 TPM and M3 cohort; see references/m7-operations.md.
 
 CIBERSORT assets are not bundled.
 
