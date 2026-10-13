@@ -139,9 +139,9 @@ The original method was DAVID; our implementation is a documented alternative. K
 
 ## M6 — STRING functional association network
 
-Read `references/m6-operations.md`. Use `pnpm run ppi` or bundled `scripts/m6-ppi.mjs` when the M4 source is complete and verified. Python `m6-string.py` calls the version-pinned STRING public API and uses NetworkX for degree/components; it preserves raw mapping and network response tables and all isolated mapped nodes. Do not automatically download GDC again.
+Read `references/m6-operations.md`. Use `pnpm run ppi` or bundled `scripts/m6-ppi.mjs` when the M4 source is complete and verified. Python `m6-string.py` calls the version-pinned STRING public API and uses NetworkX for degree/components; it preserves raw mapping and network response tables and all isolated mapped nodes. STRING's returned ID is the provider-selected best match, not independent proof of mapping uniqueness. An existing incompatible/damaged M6 cache must not refetch without explicit `--refresh-string`. Do not automatically download GDC again.
 
-D4 confidence must be explicitly selected: an integer in the active workspace `study/decisions.yaml` or an explicit `--required-score` per run. The proposed value 400 is not already approved. STRING functional associations are not experimental proof of physical binding or causality. A valid empty-edge graph is a legitimate result.
+D4 confidence must be explicitly selected: both `status: selected` (or `approved`) and an integer `selected` in the active workspace D4 record, or an explicit `--required-score` per run while unresolved. Reject contradictory D4 state. The proposed value 400 is not already approved. STRING functional associations are not experimental proof of physical binding or causality. A valid empty-edge graph is a legitimate result.
 
 ## Later canonical stages
 

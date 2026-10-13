@@ -63,8 +63,19 @@ async function codeHash() {
 function readSelectedD4(text) {
   // D4 is a fixed, scalar-valued project decision; do not parse arbitrary YAML here.
   const block = text.match(/^  D4:\r?\n((?:    [^\r\n]*\r?\n)*)/m)?.[1] ?? ''
-  const match = block.match(/^    selected:\s*(\d+)\s*$/m)
-  return match ? Number(match[1]) : null
+  const status = block.match(/^    status:\s*([\w-]+)\s*$/m)?.[1] ?? null
+  const raw = block.match(/^    selected:\s*(\S+)\s*$/m)?.[1] ?? null
+  if (raw === null || raw === 'null') {
+    if (status === 'selected' || status === 'approved') {
+      throw Error('D4 is marked selected but has no numeric selected value')
+    }
+    return null
+  }
+  if (!/^\d+$/.test(raw)) throw Error('Invalid numeric D4 selected value')
+  if (status !== 'selected' && status !== 'approved') {
+    throw Error('D4 selected value requires status: selected or approved')
+  }
+  return Number(raw)
 }
 async function d4Selection(workspace, requiredScore) {
   let selected = null
@@ -102,13 +113,15 @@ function report(input, statistics, config, mode) {
     '## Results',
     '- Significant genes submitted: ' + statistics.submitted_genes,
     '- Protein-coding unique symbols submitted: ' + statistics.eligible_symbols,
-    '- Unambiguously mapped STRING proteins: ' + metrics.mapped_proteins,
+    '- STRING best-matched proteins (not independently uniqueness-verified): ' + metrics.mapped_proteins,
     '- STRING association edges: ' + metrics.edges,
     '- Disconnected proteins: ' + metrics.isolated_proteins,
     '- Components: ' + metrics.connected_components,
     '- Largest component: ' + metrics.largest_component, '',
     '## Method and limitations',
     '- Protein-coding M4 significant DEG symbols; ambiguous identifiers excluded.',
+    '- STRING get_string_ids returns one best match per query, not proof of a uniquely resolvable gene identity.',
+    '- Multiple returned IDs for a query and duplicate protein mappings are excluded and audited.',
     '- STRING IDs are resolved explicitly before querying input-only network associations.',
     '- Edge threshold is expressed 0–1000; API score is 0–1 and is converted explicitly.',
     '- NetworkX computes undirected degree and connected components; all mapped isolates retained.',
@@ -134,8 +147,12 @@ export async function analyzePpi(workspace, { requiredScore = null, refreshStrin
   let active
   try { active = await json(pointer) }
   catch (error) { if (error.code !== 'ENOENT') throw error }
-  if (!refreshString && await cacheHit(workspace, active, fingerprint, scriptDigest)) {
-    return { status: 'cache-hit', manifest: active }
+  if (active && !refreshString) {
+    if (await cacheHit(workspace, active, fingerprint, scriptDigest)) {
+      return { status: 'cache-hit', manifest: active }
+    }
+    throw Error('Existing M6 cache is incompatible or damaged; inspect study/ppi.json ' +
+      'and use --refresh-string explicitly for a new STRING retrieval')
   }
   const base = join(workspace, 'runs/m6-ppi')
   const id = 'm6-' + Date.now() + '-' + randomUUID().slice(0, 8)

@@ -131,5 +131,73 @@ test('M6 singleton mapping never expands to external STRING neighbors', async ()
   assert.deepEqual(nodeRows.map(x => x.query_gene), ['TP53'])
   const reqs = JSON.parse(await get(f, result.manifest, 'string-requests.json'))
   assert.equal(reqs.network_mode, 'singleton-input-only')
-  assert.equal(reqs.mapping.limit, '10')
+  assert.equal(reqs.mapping.limit, undefined)
+  assert.match(reqs.mapping_method, /one best match/)
+  assert.match(await get(f, result.manifest, 'string-id-mapping.tsv'), /string_best_match/)
+})
+
+
+test('M6 fails closed on damaged or incompatible active cache until explicit STRING refresh', async () => {
+  const f = await fixture()
+  const initial = await analyzePpi(f.ws, opts(f))
+  const pointerFile = join(f.ws, 'study/ppi.json')
+  const prior = await readFile(pointerFile, 'utf8')
+  // Keep both offline provider fixtures valid: absent a fail-closed guard,
+  // an unrequested second analysis would succeed and replace the pointer.
+  const metrics = initial.manifest.outputs.find(item => item.path.endsWith('/ppi-metrics.tsv'))
+  await writeFile(join(f.ws, metrics.path), 'corrupt')
+  await assert.rejects(analyzePpi(f.ws, opts(f)), /cache is incompatible or damaged.*--refresh-string/)
+  assert.equal(await readFile(pointerFile, 'utf8'), prior)
+  // A different chosen confidence also requires an explicit new provider request.
+  await assert.rejects(analyzePpi(f.ws, { ...opts(f), requiredScore: 700 }),
+    /cache is incompatible or damaged.*--refresh-string/)
+  assert.equal(await readFile(pointerFile, 'utf8'), prior)
+  // The existing pointer is preserved until a full refresh completes.
+  const refreshed = await analyzePpi(f.ws, { ...opts(f), refreshString: true })
+  assert.equal(refreshed.status, 'analyzed')
+  assert.notEqual(refreshed.manifest.id, initial.manifest.id)
+  assert.equal((await analyzePpi(f.ws, opts(f))).status, 'cache-hit')
+})
+
+test('M6 requires selected D4 status and rejects unresolved numeric selections', async () => {
+  const f = await fixture()
+  const file = join(f.ws, 'study/decisions.yaml')
+  await writeFile(file, 'decisions:\n  D4:\n    status: unresolved\n    selected: 400\n')
+  await assert.rejects(analyzePpi(f.ws), /requires status: selected or approved/)
+  await assert.rejects(analyzePpi(f.ws, opts(f)), /requires status: selected or approved/)
+  await writeFile(file, 'decisions:\n  D4:\n    status: demo-default\n    selected: 400\n')
+  await assert.rejects(analyzePpi(f.ws, opts(f)), /requires status: selected or approved/)
+  await writeFile(file, 'decisions:\n  D4:\n    status: selected\n    selected: null\n')
+  await assert.rejects(analyzePpi(f.ws, opts(f)), /marked selected but has no numeric selected/)
+  // The proposed default is not chosen; an explicit CLI run is permitted.
+  await writeFile(file, 'decisions:\n  D4:\n    status: unresolved\n    proposed_default: 400\n    selected: null\n')
+  const result = await analyzePpi(f.ws, opts(f))
+  assert.equal(result.manifest.parameters.selection, 'explicit-run-parameter')
+})
+
+test('M6 identifies STRING provider best matches without asserting unique biological identity', async () => {
+  const f = await fixture()
+  const result = await analyzePpi(f.ws, opts(f))
+  const rows = parseTsv(await get(f, result.manifest, 'string-id-mapping.tsv'),
+    ['queryItem', 'stringId', 'preferredName', 'status', 'reason'])
+  const tp53 = rows.find(row => row.queryItem === 'TP53')
+  assert.equal(tp53.status, 'string_best_match')
+  assert.equal(tp53.reason, '')
+  const report = await get(f, result.manifest, 'report.md')
+  assert.match(report, /best match per query/)
+  assert.doesNotMatch(report, /Unambiguously mapped STRING proteins/)
+  const params = JSON.parse(await get(f, result.manifest, 'string-requests.json'))
+  assert.equal(params.mapping.limit, undefined)
+  assert.match(params.mapping_method, /no independent uniqueness verification/)
+  // Even if a future server returns multiple IDs for one symbol, exclude it.
+  const base = await readFile(f.mapping, 'utf8')
+  await writeFile(f.mapping, base + '0\tTP53\t9606.ENSP000099999\tTP53\n')
+  await writeFile(f.network, 'stringId_A\tstringId_B\tscore\n')
+  const revised = await analyzePpi(f.ws, { ...opts(f), refreshString: true })
+  const candidates = parseTsv(await get(f, revised.manifest, 'string-id-mapping.tsv'),
+    ['queryItem', 'stringId', 'status', 'reason'])
+  const rejected = candidates.find(x => x.queryItem === 'TP53')
+  assert.equal(rejected.status, 'excluded')
+  assert.equal(rejected.reason, 'ambiguous_string_id')
+  assert.equal(revised.manifest.summary.metrics.mapped_proteins, 3)
 })

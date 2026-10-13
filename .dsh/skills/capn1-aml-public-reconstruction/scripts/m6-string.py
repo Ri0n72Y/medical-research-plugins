@@ -144,11 +144,13 @@ def resolve_ids(symbols, raw, folder):
         reason = ("unmapped" if not ids else
                   "ambiguous_string_id" if len(ids) != 1 else
                   "duplicate_protein_mapping" if symbol not in accepted else "")
+        # STRING's get_string_ids returns the *best* match, not a set of
+        # candidate proteins. A single returned ID is not proof of uniqueness.
         rows.append([symbol, accepted.get(symbol, ""), labels.get(mapped.get(symbol), ""),
-                     "mapped" if not reason else "excluded", reason])
+                     "string_best_match" if not reason else "excluded", reason])
     tsv(folder / "string-id-mapping.tsv", MAPPING, rows)
     if not accepted:
-        raise ValueError("No unambiguous human STRING identifiers")
+        raise ValueError("No usable human STRING best-match identifiers")
     return accepted, labels, rows
 
 
@@ -250,7 +252,7 @@ def main():
     folder.mkdir(parents=True, exist_ok=True)
     symbols, prepared = prepare_genes(pathlib.Path(args.deg), folder, args.m4_fdr)
     parameters = {"identifiers": "\r".join(symbols), "species": "9606",
-                  "echo_query": "1", "limit": "10", "caller_identity": CALLER}
+                  "echo_query": "1", "caller_identity": CALLER}
     mapping, mode = request("get_string_ids", parameters,
                             pathlib.Path(args.mapping_fixture) if args.mapping_fixture else None)
     (folder / "string-id-mapping-raw.tsv").write_text(mapping, encoding="utf-8")
@@ -278,7 +280,9 @@ def main():
          ("required_score_0_to_1000", args.required_score)])
     requests = {
         "provider": ENDPOINT, "source_mode": mode, "mapping": parameters,
-        "network": network_params, "network_mode": network_mode, "note": "Functional associations, not necessarily physical contacts.",
+        "network": network_params, "network_mode": network_mode,
+        "mapping_method": "STRING get_string_ids returns one best match; no independent uniqueness verification",
+        "note": "Functional associations, not necessarily physical contacts.",
     }
     (folder / "string-requests.json").write_text(json.dumps(requests, indent=2) + "\n")
     (folder / "statistics.json").write_text(json.dumps({

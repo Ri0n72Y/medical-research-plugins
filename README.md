@@ -160,7 +160,7 @@ The current source code is under `.dsh/skills/capn1-aml-public-reconstruction/`.
 
 ## M6 — STRING / NetworkX
 
-Use the existing M4 significant DEG output, not a repeated GDC download. Once D4 is explicitly selected, run `pnpm run ppi --workspace /path/to/study --required-score 400` (400 shown as an *example*, not an approved default). The analysis stores version-pinned STRING responses and an immutable human functional-association graph with full node/edge TSVs, NetworkX metrics and an SVG overview. Repeated compatible runs are cache hits; `--refresh-string` explicitly requests new provider responses. See [M6 methods and contract](docs/m6-string-ppi.md).
+Use the existing M4 significant DEG output, not a repeated GDC download. Once D4 is explicitly selected, run `pnpm run ppi --workspace /path/to/study --required-score 400` (400 shown as an *example*, not an approved default). The analysis stores version-pinned STRING responses and an immutable human functional-association graph with full node/edge TSVs, NetworkX metrics and an SVG overview. Repeated compatible runs are cache hits; damaged/incompatible existing caches fail without an automatic refetch, and `--refresh-string` explicitly requests new provider responses. STRING `get_string_ids` provides a best match per gene symbol, not a uniqueness guarantee. For study-record D4, set `status: selected` and an integer `selected` together. See [M6 methods and contract](docs/m6-string-ppi.md).
 
 ## Status and tests
 
