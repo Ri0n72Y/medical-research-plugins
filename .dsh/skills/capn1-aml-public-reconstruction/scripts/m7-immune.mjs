@@ -135,12 +135,16 @@ export async function analyzeImmune(workspace, { mode = null, refreshSignatures 
   try { active = await json(pointer) } catch (e) { if (e.code !== 'ENOENT') throw e }
   if (active && !refreshSignatures) {
     // No network requests before determining whether the active result is reusable.
-    const currentRef = await json(join(workspace, 'study/immune-signature-reference.json'))
-    await checkSignatures(workspace, currentRef)
+    // Active M7 results pin their own immutable signature snapshot. A later
+    // successful GMT refresh followed by failed ssGSEA must not invalidate
+    // the previously completed run or implicitly use an unanalysed reference.
+    const priorReference = active.signature_reference
+    if (!priorReference) throw Error('Existing M7 result lacks a signature reference')
+    await checkSignatures(workspace, priorReference)
     const fingerprint = sum(JSON.stringify({implementation, digest, m2: input.m2.id,
       m3: input.m3.id, m2_outputs: input.m2.outputs.map(x => [x.path,x.sha256]),
       m3_outputs: input.m3.outputs.map(x => [x.path,x.sha256]),
-      reference: currentRef.file.sha256, choice }))
+      reference: priorReference.file.sha256, choice }))
     if (await verifiedActive(workspace, active, fingerprint, digest)) {
       return { status: 'cache-hit', manifest: active }
     }

@@ -25,7 +25,7 @@ pnpm run immune --workspace /absolute/path/to/research-workspace --immune-mode s
 
 The explicit CLI mode is a documented run-level choice. Alternatively record `D5.status: selected` and `D5.selected: ssgsea-only` in the study's decision YAML. If choosing CIBERSORT or another public substitute, this narrow implementation fails explicitly rather than inventing a result or substituting methods.
 
-The analysis stores `gene-mapping.tsv`, `signature-coverage.tsv`, `immune-scores.tsv`, `group-comparison.tsv`, `immune-signatures.svg`, `runtime.tsv`, `statistics.json` and `report.md` under `runs/m7-immune/`, with SHA-256 output manifests. `study/immune.json` is updated only after a completed run. Repeating a compatible run uses cache; damaged/incompatible completed results fail closed unless the user explicitly requests `--refresh-signatures`.
+The analysis stores `gene-mapping.tsv`, `signature-coverage.tsv`, `immune-scores.tsv`, `group-comparison.tsv`, `immune-signatures.svg`, `runtime.tsv`, `statistics.json` and `report.md` under `runs/m7-immune/`, with SHA-256 output manifests. `study/immune.json` is updated only after a completed run. Repeating a compatible run uses cache; damaged/incompatible completed results fail closed unless the user explicitly requests `--refresh-signatures`. Each completed M7 run pins its own immutable marker-GMT reference: if a later GMT refresh succeeds but the subsequent ssGSEA analysis fails, the previous completed immune run remains readable and cache-reusable with its historical reference. No implicit re-query is performed.
 
 ## Boundaries
 

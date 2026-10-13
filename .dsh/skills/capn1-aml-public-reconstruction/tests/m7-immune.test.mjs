@@ -133,3 +133,32 @@ test('M7 parses original D5 allowed-list structure and rejects contradictory mod
   await assert.rejects(analyzeImmune(f.ws,f.options),/conflicts with D5/)
   await assert.rejects(analyzeImmune(f.ws,{mode:'public-substitute'}),/Only Python ssGSEA-only/)
 })
+
+
+test('M7 keeps last-good result reusable after a refreshed marker snapshot causes analysis failure',async()=>{
+  const f=await setup()
+  const first=await analyzeImmune(f.ws,f.options)
+  const pointer=join(f.ws,'study/immune.json')
+  const old=await readFile(pointer,'utf8')
+  const refFile=join(f.ws,'study/immune-signature-reference.json')
+  const priorRef=JSON.parse(await readFile(refFile,'utf8'))
+  // A well-formed, distinct public snapshot without any immune-labeled
+  // signatures passes download validation but must fail Python analysis.
+  const nonimmune = [
+    ['Hepatocytes','PanglaoDB',...genes.slice(0,12)],
+    ['Fibroblasts','PanglaoDB',...genes.slice(12,24)],
+  ].map(row=>row.join('\t')).join('\n')+'\n'
+  await assert.rejects(analyzeImmune(f.ws,{
+    ...f.options,refreshSignatures:true,
+    downloadSignatures:async()=>nonimmune
+  }),/No immune-labeled marker signatures/)
+  assert.equal(await readFile(pointer,'utf8'),old)
+  const newerRef=JSON.parse(await readFile(refFile,'utf8'))
+  assert.notEqual(newerRef.file.sha256,priorRef.file.sha256)
+  const again=await analyzeImmune(f.ws,{...f.options,
+    downloadSignatures:async()=>{throw Error('Unexpected external signature download')}})
+  assert.equal(again.status,'cache-hit')
+  assert.equal(again.manifest.id,first.manifest.id)
+  // A completed run remains bound to its exact original signature source.
+  assert.equal(again.manifest.signature_reference.file.sha256,priorRef.file.sha256)
+})
