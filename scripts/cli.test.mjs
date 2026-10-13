@@ -51,3 +51,18 @@ test('package lifecycle cannot invoke a public GDC download during install or te
   assert.equal(pkg.scripts.postinstall, undefined)
   assert.ok(pkg.scripts['data:prepare'].includes('scripts/cli.mjs prepare'))
 })
+
+test('M6 CLI confidence and refresh controls are isolated from earlier stages', () => {
+  assert.equal(parseArgs(['ppi', '--required-score', '400']).requiredScore, 400)
+  assert.equal(parseArgs(['ppi', '--required-score', '0']).requiredScore, 0)
+  assert.equal(parseArgs(['ppi', '--refresh-string']).refreshString, true)
+  assert.throws(() => parseArgs(['ppi', '--required-score', '1001']), /0..1000/)
+  assert.throws(() => parseArgs(['ppi', '--required-score', '-1']), /invalid/)
+  assert.throws(() => parseArgs(['deg', '--required-score', '400']), /only for ppi/)
+  assert.throws(() => parseArgs(['deg', '--refresh-string']), /only for ppi/)
+  const run = spawnSync(process.execPath, [cli, 'ppi', '--dry-run', '--required-score', '400'],
+    { encoding: 'utf8' })
+  assert.equal(run.status, 0, run.stderr)
+  assert.match(run.stderr, /Python NetworkX/)
+  assert.doesNotMatch(run.stderr, /GDC download/)
+})

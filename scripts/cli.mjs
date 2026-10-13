@@ -20,6 +20,7 @@ export function parseArgs(argv) {
   const options = {
     command, mode, workspace: join(root, 'research-workspace'),
     dryRun: false, refresh: false, rerun: false, refreshKegg: false,
+    refreshString: false, requiredScore: null,
   }
   for (let i = index; i < argv.length; i += 1) {
     if (argv[i] === '--workspace') {
@@ -29,12 +30,20 @@ export function parseArgs(argv) {
     else if (argv[i] === '--refresh') options.refresh = true
     else if (argv[i] === '--rerun') options.rerun = true
     else if (argv[i] === '--refresh-kegg') options.refreshKegg = true
+    else if (argv[i] === '--refresh-string') options.refreshString = true
+    else if (argv[i] === '--required-score') {
+      if (!argv[i+1] || !/^\d+$/.test(argv[i+1])) throw Error('Missing or invalid --required-score integer')
+      options.requiredScore = Number(argv[++i])
+      if (options.requiredScore > 1000) throw Error('--required-score must be 0..1000')
+    }
     else throw Error(`Unknown option: ${argv[i]}`)
   }
   if (command !== 'prepare' && (options.refresh || (options.rerun && !['survival', 'deg', 'enrichment'].includes(command)))) {
     throw Error('--refresh is only for prepare; --rerun is for prepare, survival, deg or enrichment')
   }
   if (options.refreshKegg && command !== 'enrichment') throw Error('--refresh-kegg is only for enrichment')
+  if (options.refreshString && command !== 'ppi') throw Error('--refresh-string is only for ppi')
+  if (options.requiredScore !== null && command !== 'ppi') throw Error('--required-score is only for ppi')
   return options
 }
 
@@ -167,6 +176,22 @@ async function runEnrichment(options) {
   console.log('M5 report: ' + result.manifest.outputs.find(x => x.path.endsWith('/report.md'))?.path)
 }
 
+async function runPpi(options) {
+  await ensureWorkspace(options.workspace, options.dryRun)
+  if (options.dryRun) {
+    console.error('Planned: verified M4 DEGs → STRING human ID mapping/network → Python NetworkX M6 outputs')
+    console.error('D4 confidence: ' + (options.requiredScore ?? 'must be recorded in study/decisions.yaml or supplied explicitly'))
+    return
+  }
+  const { analyzePpi } = await import(pathToFileURL(join(skill, 'scripts/m6-ppi.mjs')).href)
+  const result = await analyzePpi(options.workspace, {
+    requiredScore: options.requiredScore, refreshString: options.refreshString,
+  })
+  console.error('[M6] ' + result.status + ' — ' + result.manifest.id)
+  if (result.status === 'cache-hit') console.error('[CACHE] Reusing verified STRING network; no external request.')
+  console.log('M6 report: ' + result.manifest.outputs.find(x => x.path.endsWith('/report.md'))?.path)
+}
+
 async function prepareData(options) {
   await ensureWorkspace(options.workspace, options.dryRun)
   if (options.dryRun) {
@@ -203,11 +228,12 @@ pnpm run data:prepare    Download/cache public GDC data and write M2 QC
 pnpm run survival        Run M3 Python lifelines survival from existing M2
 pnpm run deg             Run M4 Python PyDESeq2 DEG from cached M2/M3
 pnpm run enrichment      Run M5 Python GO/KEGG ORA from cached M4
+pnpm run ppi             Run M6 Python STRING/NetworkX from cached M4 (requires D4 score)
 pnpm run headless:qc      Generate an AI-assisted summary from cached QC
 pnpm run deploy:acp       Deploy the separate ACP profile
 node scripts/cli.mjs acp  Serve ACP JSON-RPC (stdout reserved)
 
-Options: --workspace <path>, --dry-run; prepare: --refresh, --rerun; survival/deg/enrichment: --rerun; enrichment: --refresh-kegg`)
+Options: --workspace <path>, --dry-run; prepare: --refresh, --rerun; survival/deg/enrichment: --rerun; enrichment: --refresh-kegg; ppi: --required-score 400, --refresh-string`)
 }
 export async function main(argv = process.argv.slice(2)) {
   const opt = parseArgs(argv)
@@ -221,6 +247,7 @@ export async function main(argv = process.argv.slice(2)) {
   if (opt.command === 'survival') return runSurvival(opt)
   if (opt.command === 'deg') return runDeg(opt)
   if (opt.command === 'enrichment') return runEnrichment(opt)
+  if (opt.command === 'ppi') return runPpi(opt)
   if (opt.command === 'deploy') return deploy(opt.mode, opt)
   if (opt.command === 'web' || opt.command === 'headless') {
     await deploy(opt.command, opt, { force: false })
