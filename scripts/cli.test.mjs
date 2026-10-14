@@ -89,3 +89,14 @@ test('M8 CLI report flags cannot leak to scientific or acquisition stages',()=>{
   assert.match(run.stderr,/read-only verified M1/)
   assert.doesNotMatch(run.stderr,/Downloading|refetch/)
 })
+
+test('Paper-coverage commands keep imported materials in their own scope',()=>{
+  for(const kind of ['paper:clinical','paper:pancan','paper:composition'])
+    assert.equal(parseArgs([kind,'--rerun']).rerun,true)
+  assert.equal(parseArgs(['paper:pancan','--pancan-input','/tmp/pancan.tsv']).command,'paper:pancan')
+  assert.throws(()=>parseArgs(['immune','--cibersort-result','other.tsv']),/only for paper:composition/)
+  assert.throws(()=>parseArgs(['paper:clinical','--pancan-input','other.tsv']),/only for paper:pancan/)
+  const r=spawnSync(process.execPath,[cli,'paper:composition','--dry-run'],{encoding:'utf8'})
+  assert.equal(r.status,0,r.stderr)
+  assert.match(r.stderr,/paper workflow coverage composition/)
+})
