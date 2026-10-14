@@ -153,6 +153,12 @@ D5 is unresolved by default. Require an explicit `--immune-mode ssgsea-only` or 
 
 Read `references/m8-operations.md`. Use `pnpm run report` to assemble only verified M1–M7 workspace results into an immutable Markdown reconstruction report, evidence register and gaps table. Missing runs are plainly labeled `INCOMPLETE DRAFT`; existing corrupt artifacts and mismatched source/M2/M3/M4 lineage are errors. The generator never refetches data, reruns analysis, or invents published effect sizes. Use `--require-complete` to reject missing M6/M7 evidence, and `--rerun` for explicit local regeneration. Even a fully populated report is only `ready_for_researcher_review`, not an approved scientific conclusion.
 
+## M9 — Optional CAPN1/AML exploratory research
+
+Read `references/m9-exploration.md`. Unlike M1–M8, M9 is a **DSH-native research discussion and note-taking practice**, not a new program or required analytic stage. Prioritize focused questions about CAPN1 prognosis robustness, immune marker-score interpretation, and external AML cohort reproducibility. Keep exploratory notes under `exploration/`, cite the specific publication and any actual workspace artifacts, and retain uncertainty and counter-explanations.
+
+Do not create missing M6/M7 real-data results, approve D4/D5 decisions, modify canonical study pointers or silently replace the M8 report. An exploratory result becomes formal only on explicit researcher decision and a new declared run/protocol revision. No separate runtime, code validator, CLI command, or CI workflow is needed.
+
 ## Later canonical stages
 
 After M2, follow `references/canonical-flow.md` for researcher-approved cohort, CAPN1 expression and survival, differential expression, enrichment, STRING, immune analysis, reconstruction reporting, and exploration.

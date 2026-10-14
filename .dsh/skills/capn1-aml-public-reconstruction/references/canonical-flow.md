@@ -144,6 +144,8 @@ A mismatch is a reportable result. Do not tune hidden parameters merely to repro
 
 ## Stage 10 — Exploration
 
+Read `references/m9-exploration.md`. This is an optional DSH conversation and Markdown note workflow, not a new statistical program or required output.
+
 The researcher may ask for:
 
 - current literature;
