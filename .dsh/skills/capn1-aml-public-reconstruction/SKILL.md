@@ -157,7 +157,7 @@ Read `references/m8-operations.md`. Use `pnpm run report` to assemble only verif
 
 Read `references/paper-coverage.md`. The public paper describes pan-cancer expression, clinical feature associations and CIBERSORT-style immune composition in addition to M1–M8. Use `pnpm run paper:pancan`, `paper:clinical`, and `paper:composition` on the same workspace to produce inspectable TSV/SVG/reports. Keep results in dedicated `study/paper-*.json` pointers; the original M8 synthesis stays unchanged.
 
-The NNLS public marker proxy uses existing Panglao data and is **not** actual CIBERSORT fractions. An authorized external CIBERSORT TSV can be imported for visualization with `--cibersort-result`. Do not fetch/bundle licensed LM22 or claim a public substitute is the paper's original method. These are workflow demonstrations, not scientific adjudication gates.
+The NNLS public marker proxy uses existing Panglao data and is **not** actual CIBERSORT fractions. An authorized external CIBERSORT TSV can be imported for visualization with `--cibersort-result`. Do not fetch/bundle licensed LM22 or claim a public substitute is the paper's original method. These are workflow demonstrations, not scientific adjudication gates. To assemble all steps without reanalysis, read `references/m11-operations.md` and run `pnpm run record --workspace <study>`. M11 preserves M8, indexes missing runs, shows stored researcher choices and distinguishes CLI outputs from observed DSH Agent calls.
 
 ## M9 — DSH workflow engineering demonstration
 

@@ -186,6 +186,12 @@ These are **workflow demonstration slices**, not new biological-validation gates
 
 Outputs are saved under `runs/paper-<kind>/`, indexed by `study/paper-<kind>.json`. Repeats reuse cached outputs; `--rerun` regenerates locally. These extra steps do not alter the original M1–M8 formal report. Source provenance and limitations: [paper workflow gap coverage](docs/paper-coverage.md).
 
+## Integrated paper-to-workspace research record (M11)
+
+Run `pnpm run record --workspace /study` **after any subset of existing stages**. This does not download, rerun statistics or change M8. It reads the explicit [paper-step map](.dsh/skills/capn1-aml-public-reconstruction/references/paper-workflow.json), active workspace pointers and existing decision file; writes an immutable `runs/m11-record/<run-id>/study-record.md` with all 11 original-publication workflow steps and three supplements, plus stage and artifact TSVs and Harness-observation notes. Repeated compatible calls use cache; `--rerun` regenerates the index only.
+
+Researcher-owned method decisions remain visible. The Harness case-study section deliberately distinguishes **capability demonstrated by scripts** from **actual Agent-originated tool calls**: optional `study/harness-session.md` observations must be captured in a live DSH session, not inferred from CI. This is an engineering research record rather than a scientific-signoff system. See [M11 design and acceptance](docs/m11-integrated-record.md).
+
 ## Status and tests
 
 M1–M8 engineering implementations are merged to `main`, with M8 an evidence-based synthesis of already present study artifacts. The earlier M1–M5 public-data demonstration and deterministic CI do **not** establish a complete live M6/M7 result, D4/D5 scientific selection, or researcher approval of an M8 report. M9 adds only a DSH engineering demonstration/acceptance guide; no new numerical runtime. Registry publication and end-to-end DSH environment acceptance remain separate work. No R runtime is required.

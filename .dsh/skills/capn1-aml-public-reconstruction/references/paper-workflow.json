@@ -1,0 +1,120 @@
+{
+  "version": 1,
+  "publication": {
+    "title": "CAPN1 is a novel biomaker of patients with AML based on comprehensive analysis",
+    "pmid": "37114994",
+    "basis": "indexed abstract / public method map; not verified figure-by-figure full text"
+  },
+  "steps": [
+    {
+      "key": "source",
+      "step": "M1",
+      "paper": "TCGA-LAML public data",
+      "pointer": "study/source.json",
+      "command": "pnpm run data:prepare",
+      "decision": "",
+      "method": "NCI GDC acquisition; original snapshot not established",
+      "tool": "DSH Skill → GDC API → saved source"
+    },
+    {
+      "key": "processed",
+      "step": "M2",
+      "paper": "Expression and clinical preprocessing",
+      "pointer": "study/processed.json",
+      "command": "pnpm run data:prepare",
+      "decision": "",
+      "method": "STAR counts + TPM/clinical joins",
+      "tool": "DSH Skill → deterministic Node processing"
+    },
+    {
+      "key": "paper-pancan",
+      "step": "P1",
+      "paper": "Pan-cancer CAPN1 expression and tumor/normal comparison",
+      "pointer": "study/paper-pancan.json",
+      "command": "pnpm run paper:pancan",
+      "decision": "",
+      "method": "Xena PanCanAtlas, not the M2 STAR TPM snapshot",
+      "tool": "DSH Skill → Xena/Python → TSV/SVG"
+    },
+    {
+      "key": "survival",
+      "step": "M3",
+      "paper": "AML CAPN1 groups, Kaplan–Meier and Cox",
+      "pointer": "study/survival.json",
+      "command": "pnpm run survival",
+      "decision": "D1,D2",
+      "method": "Python lifelines; unadjusted Cox, demo median cutoff",
+      "tool": "DSH Skill → Python lifelines"
+    },
+    {
+      "key": "paper-clinical",
+      "step": "P2",
+      "paper": "AML clinical-feature association",
+      "pointer": "study/paper-clinical.json",
+      "command": "pnpm run paper:clinical",
+      "decision": "D1",
+      "method": "M2 age/sex/available ELN + M3 groups; not all paper characteristics",
+      "tool": "DSH Skill → Python SciPy"
+    },
+    {
+      "key": "deg",
+      "step": "M4",
+      "paper": "CAPN1-group differential expression",
+      "pointer": "study/deg.json",
+      "command": "pnpm run deg",
+      "decision": "D1,D3",
+      "method": "PyDESeq2 on unstranded counts",
+      "tool": "DSH Skill → Python PyDESeq2"
+    },
+    {
+      "key": "enrichment",
+      "step": "M5",
+      "paper": "GO/KEGG pathway enrichment",
+      "pointer": "study/enrichment.json",
+      "command": "pnpm run enrichment",
+      "decision": "D3",
+      "method": "SciPy/Statsmodels public substitute; original uses DAVID",
+      "tool": "DSH Skill → Python GO/KEGG"
+    },
+    {
+      "key": "ppi",
+      "step": "M6",
+      "paper": "STRING protein association network",
+      "pointer": "study/ppi.json",
+      "command": "pnpm run ppi --required-score 400",
+      "decision": "D4",
+      "method": "STRING functional network; 400 is explicit demo example",
+      "tool": "DSH Skill → STRING API/NetworkX"
+    },
+    {
+      "key": "immune",
+      "step": "M7",
+      "paper": "ssGSEA immune marker features",
+      "pointer": "study/immune.json",
+      "command": "pnpm run immune --immune-mode ssgsea-only",
+      "decision": "D5",
+      "method": "GSEApy on public Panglao markers; not original GSVA",
+      "tool": "DSH Skill → Python GSEApy"
+    },
+    {
+      "key": "paper-composition",
+      "step": "P3",
+      "paper": "Immune cell composition / CIBERSORT step",
+      "pointer": "study/paper-composition.json",
+      "command": "pnpm run paper:composition",
+      "decision": "D5",
+      "method": "Public marker NNLS proxy, NOT CIBERSORT; optional imported authorized CIBERSORT TSV",
+      "tool": "DSH Skill → Python SciPy NNLS"
+    },
+    {
+      "key": "reconstruction-report",
+      "step": "M8",
+      "paper": "Original-paper flow evidence synthesis",
+      "pointer": "study/reconstruction-report.json",
+      "command": "pnpm run report",
+      "decision": "",
+      "method": "M8 summarizes M1–M7 only; M11 includes P1/P2/P3",
+      "tool": "DSH Skill → workspace report assembly"
+    }
+  ]
+}
