@@ -168,9 +168,13 @@ Use the existing M4 significant DEG output, not a repeated GDC download. Once D4
 
 M7 uses GSEApy on M2 whole-transcriptome TPM and M3 paired cases. Immune-marker sets are sourced from a content-pinned public Enrichr PanglaoDB GMT snapshot. Results are sample-level ssGSEA enrichment scores and exploratory comparisons, **not** inferred immune-cell percentages or licensed CIBERSORT replication. D5 remains unresolved in the template and must be set explicitly. See [M7 operations](docs/m7-immune-ssgsea.md).
 
+## M8 — Evidence-grounded reconstruction report
+
+Use `pnpm run report --workspace /absolute/path/to/study` to synthesize **existing**, checksum-verified M1–M7 workspace outputs. Missing upstream stages produce a labeled `INCOMPLETE DRAFT`, never invented data; tampered or inconsistent present stages are hard errors. `--require-complete` rejects an incomplete study and `--rerun` explicitly creates a new immutable local report. M8 does not fetch source data, run a scientific model, or establish published numerical agreement. See [M8](docs/m8-reconstruction-report.md).
+
 ## Status and tests
 
-Implemented through M5 (full real public TCGA-LAML CI passed). M6 STRING/NetworkX is implemented in this PR, pending CI and a chosen D4 confidence for a formal study run. M7 Python ssGSEA-only path (pending PR/CI), M8 final report, and a registry-published plugin are later work. No R runtime is required.
+Implemented through M5 (full real public TCGA-LAML CI passed). M6 STRING/NetworkX is implemented in this PR, pending CI and a chosen D4 confidence for a formal study run. M6/M7 engineering implementations are merged; live M6/M7 research-data acceptance and scientific decisions remain pending. M8 evidence-synthesis implementation is tracked in a separate PR. A registry-published plugin is later work. No R runtime is required.
 
 ```sh
 pnpm test
