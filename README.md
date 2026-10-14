@@ -172,13 +172,13 @@ M7 uses GSEApy on M2 whole-transcriptome TPM and M3 paired cases. Immune-marker 
 
 Use `pnpm run report --workspace /absolute/path/to/study` to synthesize **existing**, checksum-verified M1–M7 workspace outputs. Missing upstream stages produce a labeled `INCOMPLETE DRAFT`, never invented data; tampered or inconsistent present stages are hard errors. `--require-complete` rejects an incomplete study and `--rerun` explicitly creates a new immutable local report. M8 does not fetch source data, run a scientific model, or establish published numerical agreement. See [M8](docs/m8-reconstruction-report.md).
 
-## M9 — Optional research exploration (DSH-native)
+## M9 — DSH engineering demonstration (one-paper workflow)
 
-M9 is **not** a new program. It uses the existing DSH session and workspace notes to explore questions left open by the Wang et al. CAPN1/AML study: prognosis robustness, immune-marker interpretation and independent AML cohort reproducibility. These questions are **not** established study results. Exploration belongs under `exploration/` and does not alter canonical M1–M8 results without a researcher decision. See [M9 exploratory research guide](docs/m9-exploration.md).
+M9 closes the **engineering narrative**, not a CAPN1 scientific investigation. Re-run or resume the existing M1–M8 public-workflow stages through DSH, display their tables/figures/report, show cache hits and persistent workspace state, and explain why the harness can reuse mature analysis tools instead of rebuilding a scientific platform. Explicit example settings are demonstration choices, not reconstruction of unknown paper parameters. See [M9 engineering showcase guide](docs/m9-engineering-demo.md).
 
 ## Status and tests
 
-M1–M8 engineering implementations are merged to `main`, with M8 an evidence-based synthesis of already present study artifacts. The earlier M1–M5 public-data demonstration and deterministic CI do **not** establish a complete live M6/M7 result, D4/D5 scientific selection, or researcher approval of an M8 report. M9 adds only an optional exploratory research protocol; no new numerical runtime. Registry publication and end-to-end DSH environment acceptance remain separate work. No R runtime is required.
+M1–M8 engineering implementations are merged to `main`, with M8 an evidence-based synthesis of already present study artifacts. The earlier M1–M5 public-data demonstration and deterministic CI do **not** establish a complete live M6/M7 result, D4/D5 scientific selection, or researcher approval of an M8 report. M9 adds only a DSH engineering demonstration/acceptance guide; no new numerical runtime. Registry publication and end-to-end DSH environment acceptance remain separate work. No R runtime is required.
 
 ```sh
 pnpm test

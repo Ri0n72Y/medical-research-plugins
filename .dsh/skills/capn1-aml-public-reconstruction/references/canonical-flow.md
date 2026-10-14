@@ -142,18 +142,8 @@ Separate:
 
 A mismatch is a reportable result. Do not tune hidden parameters merely to reproduce a published p-value or figure.
 
-## Stage 10 — Exploration
+## Stage 10 — Optional exploration (outside engineering showcase)
 
-Read `references/m9-exploration.md`. This is an optional DSH conversation and Markdown note workflow, not a new statistical program or required output.
+Scientific exploration—alternative cutoffs, cohorts, causal hypotheses and literature—is optional and **not** part of the DSH engineering demonstration target. It does not modify the canonical reconstruction unless a researcher explicitly requests a new analysis.
 
-The researcher may ask for:
-
-- current literature;
-- alternative cutoffs;
-- other public cohorts;
-- alternative methods;
-- candidate hypotheses.
-
-Keep this work in `exploration/` or otherwise mark it non-canonical.
-
-Exploration may become formal only through an explicit new run or protocol revision.
+For this repository's M9 closeout, instead follow `references/m9-demo.md`: demonstrate M1–M8 as a recoverable DSH-operated public workflow, with real visible outputs and an honest acceptance record. This is a documentation/operating guide only; no new analysis program or validity gate.

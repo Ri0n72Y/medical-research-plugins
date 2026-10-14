@@ -153,11 +153,11 @@ D5 is unresolved by default. Require an explicit `--immune-mode ssgsea-only` or 
 
 Read `references/m8-operations.md`. Use `pnpm run report` to assemble only verified M1–M7 workspace results into an immutable Markdown reconstruction report, evidence register and gaps table. Missing runs are plainly labeled `INCOMPLETE DRAFT`; existing corrupt artifacts and mismatched source/M2/M3/M4 lineage are errors. The generator never refetches data, reruns analysis, or invents published effect sizes. Use `--require-complete` to reject missing M6/M7 evidence, and `--rerun` for explicit local regeneration. Even a fully populated report is only `ready_for_researcher_review`, not an approved scientific conclusion.
 
-## M9 — Optional CAPN1/AML exploratory research
+## M9 — DSH workflow engineering demonstration
 
-Read `references/m9-exploration.md`. Unlike M1–M8, M9 is a **DSH-native research discussion and note-taking practice**, not a new program or required analytic stage. Prioritize focused questions about CAPN1 prognosis robustness, immune marker-score interpretation, and external AML cohort reproducibility. Keep exploratory notes under `exploration/`, cite the specific publication and any actual workspace artifacts, and retain uncertainty and counter-explanations.
+Read `references/m9-demo.md`. M9 demonstrates the existing M1–M8 one-paper reconstruction workflow as **DSH/harness engineering**, not a new CAPN1 research agenda. Show Skill invocation, native DSH tool orchestration, mature scientific tool reuse, durable workspace artifacts, cache-first resumability, explicit demonstration parameters, and a tangible M8 report. Distinguish code/CI proof, real public-data execution and DSH target-machine acceptance; never substitute one for another.
 
-Do not create missing M6/M7 real-data results, approve D4/D5 decisions, modify canonical study pointers or silently replace the M8 report. An exploratory result becomes formal only on explicit researcher decision and a new declared run/protocol revision. No separate runtime, code validator, CLI command, or CI workflow is needed.
+Avoid adding further scientific-model checks, hypothesis testing, external-cohort analysis, generic validation/caching frameworks, a Cordis plugin, or new M9 runtime. Original-vs-substitute method disclosure remains, but this project does not judge biomedical validity or accept clinical conclusions. Do not fabricate unexecuted stages or results.
 
 ## Later canonical stages
 
