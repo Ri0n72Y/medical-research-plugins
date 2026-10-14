@@ -176,6 +176,16 @@ Use `pnpm run report --workspace /absolute/path/to/study` to synthesize **existi
 
 M9 closes the **engineering narrative**, not a CAPN1 scientific investigation. Re-run or resume the existing M1–M8 public-workflow stages through DSH, display their tables/figures/report, show cache hits and persistent workspace state, and explain why the harness can reuse mature analysis tools instead of rebuilding a scientific platform. Explicit example settings are demonstration choices, not reconstruction of unknown paper parameters. See [M9 engineering showcase guide](docs/m9-engineering-demo.md).
 
+## Three additional original-paper analysis steps (paper coverage)
+
+These are **workflow demonstration slices**, not new biological-validation gates:
+
+- `pnpm run paper:pancan --workspace /study` queries UCSC Xena PanCanAtlas for CAPN1 alone. Alternatively pass `--pancan-input /export.tsv` with columns `sample_id,cancer_type,capn1_expression` (tab-delimited). Produces sample and per-cancer tables, an SVG overview and a report.
+- `pnpm run paper:clinical --workspace /study` compares existing M2 clinical age/sex/ELN fields with the existing M3 CAPN1 split, creating a paired table, association table and SVG.
+- `pnpm run paper:composition --workspace /study` reuses the existing M7 public marker GMT and M2 TPM to construct a **relative marker-based NNLS proxy**; it is **not CIBERSORT** and is not a valid estimate of immune-cell proportions. To display an actual result generated elsewhere under appropriate permission, use `--cibersort-result /path/to/output.tsv` (import/visualize only; no licensed assets bundled).
+
+Outputs are saved under `runs/paper-<kind>/`, indexed by `study/paper-<kind>.json`. Repeats reuse cached outputs; `--rerun` regenerates locally. These extra steps do not alter the original M1–M8 formal report. Source provenance and limitations: [paper workflow gap coverage](docs/paper-coverage.md).
+
 ## Status and tests
 
 M1–M8 engineering implementations are merged to `main`, with M8 an evidence-based synthesis of already present study artifacts. The earlier M1–M5 public-data demonstration and deterministic CI do **not** establish a complete live M6/M7 result, D4/D5 scientific selection, or researcher approval of an M8 report. M9 adds only a DSH engineering demonstration/acceptance guide; no new numerical runtime. Registry publication and end-to-end DSH environment acceptance remain separate work. No R runtime is required.

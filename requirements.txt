@@ -7,3 +7,4 @@ lifelines==0.30.0
 pydeseq2==0.5.4
 networkx>=3.2,<5
 gseapy==1.3.0
+xenaPython==1.0.14

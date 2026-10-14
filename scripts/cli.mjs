@@ -21,7 +21,7 @@ export function parseArgs(argv) {
     command, mode, workspace: join(root, 'research-workspace'),
     dryRun: false, refresh: false, rerun: false, refreshKegg: false,
     refreshString: false, requiredScore: null, refreshSignatures: false, immuneMode: null,
-    requireComplete: false,
+    requireComplete: false, pancanInput: null, cibersortResult: null,
   }
   for (let i = index; i < argv.length; i += 1) {
     if (argv[i] === '--workspace') {
@@ -34,6 +34,10 @@ export function parseArgs(argv) {
     else if (argv[i] === '--refresh-string') options.refreshString = true
     else if (argv[i] === '--refresh-signatures') options.refreshSignatures = true
     else if (argv[i] === '--require-complete') options.requireComplete = true
+    else if (argv[i] === '--pancan-input' || argv[i] === '--cibersort-result') {
+      if (!argv[i+1] || argv[i+1].startsWith('--')) throw Error('Missing input path')
+      options[argv[i] === '--pancan-input' ? 'pancanInput' : 'cibersortResult'] = resolve(argv[++i])
+    }
     else if (argv[i] === '--immune-mode') {
       if (!argv[i + 1] || argv[i + 1].startsWith('--')) throw Error('Missing --immune-mode value')
       options.immuneMode = argv[++i]
@@ -45,7 +49,7 @@ export function parseArgs(argv) {
     }
     else throw Error(`Unknown option: ${argv[i]}`)
   }
-  if (command !== 'prepare' && (options.refresh || (options.rerun && !['survival', 'deg', 'enrichment', 'report'].includes(command)))) {
+  if (command !== 'prepare' && (options.refresh || (options.rerun && !['survival', 'deg', 'enrichment', 'report', 'paper:clinical', 'paper:pancan', 'paper:composition'].includes(command)))) {
     throw Error('--refresh is only for prepare; --rerun is for prepare, survival, deg or enrichment')
   }
   if (options.refreshKegg && command !== 'enrichment') throw Error('--refresh-kegg is only for enrichment')
@@ -54,6 +58,8 @@ export function parseArgs(argv) {
   if (options.refreshSignatures && command !== 'immune') throw Error('--refresh-signatures is only for immune')
   if (options.immuneMode !== null && command !== 'immune') throw Error('--immune-mode is only for immune')
   if (options.requireComplete && command !== 'report') throw Error('--require-complete is only for report')
+  if (options.pancanInput && command !== 'paper:pancan') throw Error('--pancan-input is only for paper:pancan')
+  if (options.cibersortResult && command !== 'paper:composition') throw Error('--cibersort-result is only for paper:composition')
   return options
 }
 
@@ -234,6 +240,21 @@ async function runReport(options) {
   console.log('M8 report: ' + result.manifest.outputs.find(x => x.path.endsWith('/report.md'))?.path)
 }
 
+async function runPaperCommand(options) {
+  await ensureWorkspace(options.workspace, options.dryRun)
+  const kind = options.command.slice('paper:'.length)
+  if (options.dryRun) {
+    console.error('Planned: paper workflow coverage ' + kind + ' -> TSV/SVG/Markdown; workspace cache-first')
+    return
+  }
+  const { runPaperSlice } = await import(pathToFileURL(join(skill,'scripts/m10-paper-coverage.mjs')).href)
+  const result = await runPaperSlice(options.workspace,kind,{
+    rerun:options.rerun,pancanInput:options.pancanInput,cibersortResult:options.cibersortResult,
+  })
+  console.error('[PAPER] '+kind+' '+result.status+' — '+result.manifest.id)
+  console.log('Paper report: '+result.manifest.outputs.find(x=>x.path.endsWith('/report.md'))?.path)
+}
+
 async function prepareData(options) {
   await ensureWorkspace(options.workspace, options.dryRun)
   if (options.dryRun) {
@@ -273,11 +294,14 @@ pnpm run enrichment      Run M5 Python GO/KEGG ORA from cached M4
 pnpm run ppi             Run M6 Python STRING/NetworkX from cached M4 (requires D4 score)
 pnpm run immune          Run M7 Python GSEApy ssGSEA from cached M2/M3 (requires D5 mode)
 pnpm run report          Synthesize verified M1–M7 workspace evidence; incomplete stages become draft
+pnpm run paper:clinical  Compare CAPN1 groups with available clinical characteristics
+pnpm run paper:pancan    Public TCGA pan-cancer CAPN1 overview (UCSC Xena or --pancan-input)
+pnpm run paper:composition  Public NNLS immune marker proxy (or --cibersort-result)
 pnpm run headless:qc      Generate an AI-assisted summary from cached QC
 pnpm run deploy:acp       Deploy the separate ACP profile
 node scripts/cli.mjs acp  Serve ACP JSON-RPC (stdout reserved)
 
-Options: --workspace <path>, --dry-run; prepare: --refresh, --rerun; survival/deg/enrichment: --rerun; enrichment: --refresh-kegg; ppi: --required-score 400, --refresh-string; immune: --immune-mode ssgsea-only, --refresh-signatures; report: --require-complete, --rerun`)
+Options: --workspace <path>, --dry-run; prepare: --refresh, --rerun; survival/deg/enrichment: --rerun; enrichment: --refresh-kegg; ppi: --required-score 400, --refresh-string; immune: --immune-mode ssgsea-only, --refresh-signatures; report: --require-complete, --rerun; paper:pancan: --pancan-input; paper:composition: --cibersort-result`)
 }
 export async function main(argv = process.argv.slice(2)) {
   const opt = parseArgs(argv)
@@ -294,6 +318,7 @@ export async function main(argv = process.argv.slice(2)) {
   if (opt.command === 'ppi') return runPpi(opt)
   if (opt.command === 'immune') return runImmune(opt)
   if (opt.command === 'report') return runReport(opt)
+  if (['paper:clinical','paper:pancan','paper:composition'].includes(opt.command)) return runPaperCommand(opt)
   if (opt.command === 'deploy') return deploy(opt.mode, opt)
   if (opt.command === 'web' || opt.command === 'headless') {
     await deploy(opt.command, opt, { force: false })
