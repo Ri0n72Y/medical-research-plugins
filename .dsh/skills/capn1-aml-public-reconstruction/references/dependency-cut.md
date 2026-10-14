@@ -23,17 +23,17 @@ For every implementation task, use this order:
 | cache invalidation decision | DSH files + agent reasoning | none | deterministic compatibility fields in manifests | no |
 | scientific human decision | DSH user question | none | decision templates and wording | no |
 | execution permission | DSH approval / sandbox | none | none | no |
-| shell execution | DSH bash/pwsh/jobs | R/Python/CLI runtime | scripts | no |
+| shell execution | DSH bash/pwsh/jobs | Node/Python CLI runtime | scripts | no |
 | public web reading | DSH web search/fetch | public web | search strategy in skill | no |
 | external tool bridge | DSH MCP client | suitable MCP server | configuration only if used | no |
 | GDC discovery / download | DSH shell/jobs | NCI GDC API | M1 `scripts/gdc-source.mjs` | no |
-| clinical/expression normalization | DSH shell | R/Python scientific stack | thin deterministic script | no |
-| cohort QC | DSH shell | R/Python table tooling | thin deterministic script | no |
-| survival analysis | DSH shell | R survival ecosystem | thin deterministic script | no |
-| differential expression | DSH shell | DESeq2 or equivalent pinned implementation | thin deterministic script | no |
-| GO / KEGG | DSH shell | clusterProfiler or equivalent pinned public implementation | thin wrapper/script | no |
+| clinical/expression normalization | DSH shell | Node.js tabular processing | thin deterministic script | no |
+| cohort QC | DSH shell | Node.js tabular processing | thin deterministic script | no |
+| survival analysis | DSH shell | Python lifelines | thin deterministic script | no |
+| differential expression | DSH shell | Python PyDESeq2 | thin deterministic script | no |
+| GO / KEGG | DSH shell | Python SciPy / Statsmodels ORA | thin wrapper/script | no |
 | PPI | DSH web/shell | STRING public API | thin query/export script | no |
-| ssGSEA | DSH shell | GSVA + pinned gene sets | thin deterministic script + versioned resource | no |
+| ssGSEA | DSH shell | Python GSEApy + cached public marker GMT | thin deterministic script + versioned resource | no |
 | CIBERSORT | DSH question + shell if user supplies assets | user-licensed assets | adapter only if needed | no for v0 |
 | open immune substitute | DSH shell | maintained open package | thin deterministic script | no |
 | report assembly | DSH file tools + model narrative | none | template and artifact selection rules | no |
@@ -47,11 +47,11 @@ M1 did not reveal a need for a new Cordis service. Public source acquisition is 
 Two runtime questions remain:
 
 1. validate that the packaged skill can execute its bundled Node resource across the intended DSH carriers;
-2. establish a reproducible scientific runtime for later R / Bioconductor analysis.
+2. validate the existing Python scientific dependencies on the intended DSH carrier.
 
 For the scientific runtime, evaluate the smallest workable option before adding infrastructure:
 
-1. `renv.lock` plus any minimal Python lockfile;
+1. the existing `requirements.txt` and declared Node/pnpm versions;
 2. a pinned container if it integrates cleanly with the target DSH environment;
 3. a packaged runtime payload only if the above are not suitable.
 
@@ -70,7 +70,7 @@ The exact filenames are not locked yet, but v0 likely needs thin scripts for:
 - enrichment;
 - STRING export;
 - ssGSEA / selected immune analysis;
-- run-manifest generation or validation if plain shell/R code cannot do it cleanly.
+- run-manifest generation if the existing Node/Python scripts cannot do it cleanly.
 
 Each script should do one bounded scientific or data-engineering task.
 

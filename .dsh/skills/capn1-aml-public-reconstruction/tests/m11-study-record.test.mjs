@@ -35,7 +35,10 @@ test('Empty workspace unfolds paper-derived workflow without inventing results',
 })
 test('Partial workspace indexes exact recorded outputs and flags incomplete M8',async()=>{
   const ws=await workspace()
-  await put(ws,'source',{status:'complete',snapshot:'demo-gdc',digest:'source-id'})
+  await put(ws,'source',{status:'complete',snapshot:'demo-gdc',digest:'source-id',
+    manifest:'data/manifests/gdc/demo-gdc/source-manifest.json',
+    clinical:'data/raw/gdc/demo-gdc/clinical/cases.json',
+    cases:4, files:[{file_id:'f1'},{file_id:'f2'}]})
   await mkdir(join(ws,'runs/paper-pancan/p1'),{recursive:true})
   await writeFile(join(ws,'runs/paper-pancan/p1/report.md'),'# Pan-cancer recorded result\n')
   await put(ws,'paper-pancan',{status:'complete',id:'p1',
@@ -48,6 +51,10 @@ test('Partial workspace indexes exact recorded outputs and flags incomplete M8',
   assert.equal(first.manifest.summary.recorded,3)
   const md=await output(ws,first.manifest,'study-record.md')
   assert.match(md,/demo-gdc/)
+  assert.match(md,/GDC source identity digest: .source-id./)
+  assert.match(md,/data\/manifests\/gdc\/demo-gdc\/source-manifest.json/)
+  assert.match(md,/Cases: 4; expression files: 2/)
+  assert.doesNotMatch(md,/Output catalog: not provided by this active pointer/)
   assert.match(md,/Recorded source: .local-export./)
   assert.match(md,/M8 synthesis status: \*\*incomplete_draft\*\*/)
   assert.match(md,/requiredScore.*400/)
@@ -56,6 +63,8 @@ test('Partial workspace indexes exact recorded outputs and flags incomplete M8',
   assert.match(tsv,/paper-composition\t.*\tmissing\t/)
   const artifacts=await output(ws,first.manifest,'artifacts.tsv')
   assert.match(artifacts,/runs\/paper-pancan\/p1\/report.md/)
+  assert.match(artifacts,/M1\tdata\/manifests\/gdc\/demo-gdc\/source-manifest.json\t\t/)
+  assert.match(artifacts,/M1\tdata\/raw\/gdc\/demo-gdc\/clinical\/cases.json\t\t/)
   assert.equal((await generateStudyRecord(ws)).status,'cache-hit')
   await put(ws,'paper-clinical',{status:'complete',id:'clin-1',
     outputs:[{path:'runs/clinical/report.md'}]})

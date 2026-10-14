@@ -26,6 +26,10 @@ export function renderRecord(flow,states,decisionText,sessionText) {
       state.manifest?.id??state.manifest?.snapshot??'',step.command,step.decision,step.method])
     for(const file of state.manifest?.outputs??[])
       artifactRows.push([step.step,file.path,file.sha256,file.bytes])
+    if(step.key==='source' && state.manifest) {
+      for(const path of [state.manifest.manifest,state.manifest.clinical].filter(Boolean))
+        artifactRows.push([step.step,path,'',''])
+    }
   }
   lines.push('','## Reconstructed stages and observed artifacts','')
   for(const step of flow.steps) {
@@ -42,9 +46,17 @@ export function renderRecord(flow,states,decisionText,sessionText) {
     lines.push('- Recorded run: '+literal(m.id??m.snapshot??'not named'),
       '- Recorded implementation: '+literal(m.implementation??'public source'),
       '- Recorded source: '+literal(m.source??m.snapshot??'not specified'))
+    if(step.key==='source') {
+      if(m.digest) lines.push('- GDC source identity digest: '+literal(m.digest))
+      if(m.manifest) lines.push('- GDC source manifest: '+link(m.manifest))
+      if(m.clinical) lines.push('- Clinical data snapshot: '+link(m.clinical))
+      lines.push('- Cases: '+(m.cases??'not recorded')+
+        '; expression files: '+(m.files?.length??'not recorded'))
+    }
     if(m.report_status) lines.push('- M8 synthesis status: **'+m.report_status+'**')
     if(m.parameters) lines.push('- Recorded parameters: '+literal(JSON.stringify(m.parameters)))
-    if(!m.outputs?.length)lines.push('- Output catalog: not provided by this active pointer.')
+    if(!m.outputs?.length && step.key!=='source')
+      lines.push('- Output catalog: not provided by this active pointer.')
     for(const item of m.outputs??[])lines.push('- Output: '+link(item.path))
     lines.push('')
   }
