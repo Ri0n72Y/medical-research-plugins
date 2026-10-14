@@ -5,7 +5,7 @@ M9 is a **showcase and acceptance guide**, not a new biomedical research milesto
 ## What to show (in order)
 
 1. **Entry and scope.** Start the source-linked DSH Web profile with `pnpm run web --workspace <study>`. Invoke `/capn1-aml-public-reconstruction` and show that its Skill discovers the workflow and inspects existing workspace state before any operation. This DSH UI path still requires acceptance on an actual target machine.
-2. **Single-paper workflow.** Traverse M1 GDC/TCGA-LAML acquisition -> M2 expression/clinical normalization -> M3 expression/survival -> M4 differential expression -> M5 GO/KEGG -> M6 STRING/NetworkX -> M7 ssGSEA -> M8 reconstruction report. Show actual artifacts at each boundary; explain the scientific engine (Python or public API) rather than suggesting the model computes the statistics.
+2. **Single-paper workflow.** Traverse M1 GDC/TCGA-LAML acquisition -> M2 expression/clinical normalization -> M3 expression/survival -> M4 differential expression -> M5 GO/KEGG -> M6 STRING/NetworkX -> M7 ssGSEA -> additional paper gaps (pan-cancer, clinical associations, public immune-composition proxy) -> M8 reconstruction report (M8 covers M1–M7; open supplemental reports separately). Show actual artifacts at each boundary; explain the scientific engine (Python or public API) rather than suggesting the model computes the statistics.
 3. **Visible demo choices.** D4 can be supplied as `pnpm run ppi --required-score 400`; D5 as `pnpm run immune --immune-mode ssgsea-only`. These are **explicit demonstration settings**, not researcher endorsement or restoration of unspecified paper parameters. The harness should ask rather than silently assume where a configured decision is mandatory.
 4. **Durability.** Show `study/*.json` active pointers, `runs/` immutable outputs, input/output manifests and M8 `report.md`. Close and reopen the DSH session: the workspace, not conversation memory, remains the source of truth.
 5. **Cache-first behavior.** Repeat one completed stage and observe a cache-hit with no duplicated GDC/STRING/GMT fetch. Explain that source refresh, stage rerun and report regeneration are distinct actions. Only execute a refresh when explicitly requested.
@@ -23,6 +23,9 @@ pnpm run deg --workspace <study>
 pnpm run enrichment --workspace <study>
 pnpm run ppi --workspace <study> --required-score 400
 pnpm run immune --workspace <study> --immune-mode ssgsea-only
+pnpm run paper:clinical --workspace <study>
+pnpm run paper:pancan --workspace <study>           # UCSC Xena CAPN1-only
+pnpm run paper:composition --workspace <study>      # explicit NNLS proxy, NOT CIBERSORT
 pnpm run report --workspace <study>
 ```
 

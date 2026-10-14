@@ -28,6 +28,10 @@ As an engineering demonstration, `--required-score 400` and `--immune-mode ssgse
 
 After completion, re-enter DSH Web with the same workspace. Verify the prior M8 report is available and request reuse of an earlier stage. The visible success condition is correct result continuity, cache-first behavior and an intelligible explanation of which operation ran or was reused.
 
+## Additional original-paper analysis coverage
+
+The base M1–M8 chain is supplemented by `paper:clinical`, `paper:pancan` and `paper:composition`. These three commands have their **own** TSV/SVG/Markdown reports. Present them alongside M8 rather than claiming M8 already includes the supplements. The public immune composition step is **NNLS marker contribution**, not CIBERSORT; if licensed CIBERSORT results are available they may be imported/visualized instead, subject to applicable terms. See [paper coverage](paper-coverage.md).
+
 ## Evidence and closeout
 
 Record outcomes as **demonstrated**, **CI-only**, **unverified** or **blocked**. Do not label a capability demonstrated solely because a script exists or deterministic tests passed. If only M1–M5 actual public runs exist, exhibit an honest M8 draft with M6/M7 gaps instead of manufacturing those missing outputs.
