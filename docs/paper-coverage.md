@@ -6,7 +6,7 @@ This adds **demonstrable analysis steps** to the CAPN1/AML workflow, not new cri
 
 Run `pnpm run paper:pancan --workspace /study`. The Python script uses UCSC Xena's [PanCan Atlas expression dataset](https://xenabrowser.net/datapages/?dataset=EB%2B%2BAdjustPANCAN_IlluminaHiSeq_RNASeqV2.geneExp.xena&host=https%3A%2F%2Fpancanatlas.xenahubs.net) to query **CAPN1 only**, plus Xena `_primary_disease` metadata and TCGA barcode sample type. This is more appropriate for an engineering demonstration than downloading every TCGA project's raw expression matrix. The dataset is batch-adjusted RNASeqV2 expression, **not** the TPM units of the M2 STAR pipeline.
 
-For an offline exported dataset, use `--pancan-input /absolute/path/to/export.tsv` with `sample_id`, `cancer_type`, `capn1_expression` tab-separated headers. Both routes create `pancan-samples.tsv`, `pancan-summary.tsv`, `pancan-expression.svg` and `report.md`. Public Xena network availability cannot be inferred from offline CI.
+For an offline exported dataset, use `--pancan-input /absolute/path/to/export.tsv` with `sample_id`, `cancer_type`, `capn1_expression` tab-separated headers. TCGA barcode sample-type suffixes 01–09 are treated as tumor and 10–19 as normal; where paired cancer categories contain both, a two-sided Mann–Whitney comparison is shown. Both routes create `pancan-samples.tsv`, `pancan-summary.tsv`, `pancan-expression.svg` and `report.md`. Public Xena network availability cannot be inferred from offline CI.
 
 ## 2. AML clinical characteristics
 
