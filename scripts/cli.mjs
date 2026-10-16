@@ -49,7 +49,7 @@ export function parseArgs(argv) {
     }
     else throw Error(`Unknown option: ${argv[i]}`)
   }
-  if (command !== 'prepare' && (options.refresh || (options.rerun && !['survival', 'deg', 'enrichment', 'report', 'paper:clinical', 'paper:pancan', 'paper:composition'].includes(command)))) {
+  if (command !== 'prepare' && (options.refresh || (options.rerun && !['survival', 'deg', 'enrichment', 'report', 'paper:clinical', 'paper:pancan', 'paper:composition', 'record'].includes(command)))) {
     throw Error('--refresh is only for prepare; --rerun is for prepare, survival, deg or enrichment')
   }
   if (options.refreshKegg && command !== 'enrichment') throw Error('--refresh-kegg is only for enrichment')
@@ -255,6 +255,19 @@ async function runPaperCommand(options) {
   console.log('Paper report: '+result.manifest.outputs.find(x=>x.path.endsWith('/report.md'))?.path)
 }
 
+async function runStudyRecord(options) {
+  await ensureWorkspace(options.workspace, options.dryRun)
+  if (options.dryRun) {
+    console.error('Planned: paper-to-workspace record from existing stage pointers; no analysis or public fetch')
+    return
+  }
+  const { generateStudyRecord } = await import(pathToFileURL(join(skill,'scripts/m11-study-record.mjs')).href)
+  const result = await generateStudyRecord(options.workspace,{rerun:options.rerun})
+  console.error('[M11] '+result.status+' — '+result.manifest.summary.recorded+
+    '/'+result.manifest.summary.total+' stages recorded')
+  console.log('Research record: '+result.manifest.outputs.find(x=>x.path.endsWith('/study-record.md'))?.path)
+}
+
 async function prepareData(options) {
   await ensureWorkspace(options.workspace, options.dryRun)
   if (options.dryRun) {
@@ -294,6 +307,7 @@ pnpm run enrichment      Run M5 Python GO/KEGG ORA from cached M4
 pnpm run ppi             Run M6 Python STRING/NetworkX from cached M4 (requires D4 score)
 pnpm run immune          Run M7 Python GSEApy ssGSEA from cached M2/M3 (requires D5 mode)
 pnpm run report          Synthesize verified M1–M7 workspace evidence; incomplete stages become draft
+pnpm run record          Expand full paper-to-workspace study record, including all three supplemental slices
 pnpm run paper:clinical  Compare CAPN1 groups with available clinical characteristics
 pnpm run paper:pancan    Public TCGA pan-cancer CAPN1 overview (UCSC Xena or --pancan-input)
 pnpm run paper:composition  Public NNLS immune marker proxy (or --cibersort-result)
@@ -301,7 +315,7 @@ pnpm run headless:qc      Generate an AI-assisted summary from cached QC
 pnpm run deploy:acp       Deploy the separate ACP profile
 node scripts/cli.mjs acp  Serve ACP JSON-RPC (stdout reserved)
 
-Options: --workspace <path>, --dry-run; prepare: --refresh, --rerun; survival/deg/enrichment: --rerun; enrichment: --refresh-kegg; ppi: --required-score 400, --refresh-string; immune: --immune-mode ssgsea-only, --refresh-signatures; report: --require-complete, --rerun; paper:pancan: --pancan-input; paper:composition: --cibersort-result`)
+Options: --workspace <path>, --dry-run; prepare: --refresh, --rerun; survival/deg/enrichment: --rerun; enrichment: --refresh-kegg; ppi: --required-score 400, --refresh-string; immune: --immune-mode ssgsea-only, --refresh-signatures; report: --require-complete, --rerun; paper:pancan: --pancan-input; paper:composition: --cibersort-result; record: --rerun`)
 }
 export async function main(argv = process.argv.slice(2)) {
   const opt = parseArgs(argv)
@@ -318,6 +332,7 @@ export async function main(argv = process.argv.slice(2)) {
   if (opt.command === 'ppi') return runPpi(opt)
   if (opt.command === 'immune') return runImmune(opt)
   if (opt.command === 'report') return runReport(opt)
+  if (opt.command === 'record') return runStudyRecord(opt)
   if (['paper:clinical','paper:pancan','paper:composition'].includes(opt.command)) return runPaperCommand(opt)
   if (opt.command === 'deploy') return deploy(opt.mode, opt)
   if (opt.command === 'web' || opt.command === 'headless') {

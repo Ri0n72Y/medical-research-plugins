@@ -27,6 +27,7 @@ pnpm run paper:clinical --workspace <study>
 pnpm run paper:pancan --workspace <study>           # UCSC Xena CAPN1-only
 pnpm run paper:composition --workspace <study>      # explicit NNLS proxy, NOT CIBERSORT
 pnpm run report --workspace <study>
+pnpm run record --workspace <study>                # full paper-to-workspace index, no recomputation
 ```
 
 This command sequence is an **acceptance plan**, not evidence that a full live run has completed. It can entail substantial public data download and scientific computation. CI already runs deterministic offline tests; a full public end-to-end demonstration, plus actual DSH Web UX acceptance, must be evidenced separately rather than inferred from unit-test success.

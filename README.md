@@ -69,13 +69,15 @@ M4 verifies M2 raw counts and M3 paired CAPN1 high/low cohort, fits DESeq2, and 
 
 ### M5: GO / KEGG functional enrichment
 
-With a completed M4 DESeq2 run, install Python `SciPy/Statsmodels` and `org.Hs.eg.db` and run:
+With a completed M4 DESeq2 run, install the dependencies from `requirements.txt` (including SciPy/Statsmodels) and run:
 
     pnpm run enrichment
 
 M5 reuses the M4 significant genes and the properly tested M4 universe, maps Ensembl→Entrez IDs, and performs GO BP/MF/CC + KEGG enrichment. KEGG REST annotations are fetched only if absent and saved as immutable, checksum-verified references. `--rerun` reuses cached mappings; `--refresh-kegg` requests fresh KEGG public annotations. Outputs include complete enrichment tables, ID-mapping/QC, visualization, runtime versions and preserved manifests. See [M5 methods](docs/m5-go-kegg-enrichment.md).
 
-M5 keeps Python for GO/KEGG statistical calculations and uses Python 3 (standard library) for SVG chart generation.\n\nThe enrichment is a declared **SciPy/Statsmodels replacement for original DAVID**, not a claim of identical DAVID analysis or pathways.
+M5 keeps Python for GO/KEGG statistical calculations and uses Python 3 (standard library) for SVG chart generation.
+
+The enrichment is a declared **SciPy/Statsmodels replacement for original DAVID**, not a claim of identical DAVID analysis or pathways.
 
 ### Configure your model API key
 
@@ -185,6 +187,12 @@ These are **workflow demonstration slices**, not new biological-validation gates
 - `pnpm run paper:composition --workspace /study` reuses the existing M7 public marker GMT and M2 TPM to construct a **relative marker-based NNLS proxy**; it is **not CIBERSORT** and is not a valid estimate of immune-cell proportions. To display an actual result generated elsewhere under appropriate permission, use `--cibersort-result /path/to/output.tsv` (import/visualize only; no licensed assets bundled).
 
 Outputs are saved under `runs/paper-<kind>/`, indexed by `study/paper-<kind>.json`. Repeats reuse cached outputs; `--rerun` regenerates locally. These extra steps do not alter the original M1–M8 formal report. Source provenance and limitations: [paper workflow gap coverage](docs/paper-coverage.md).
+
+## Integrated paper-to-workspace research record (M11)
+
+Run `pnpm run record --workspace /study` **after any subset of existing stages**. This does not download, rerun statistics or change M8. It reads the explicit [paper-step map](.dsh/skills/capn1-aml-public-reconstruction/references/paper-workflow.json), active workspace pointers and existing decision file; writes an immutable `runs/m11-record/<run-id>/study-record.md` with all 11 original-publication workflow steps and three supplements, plus stage and artifact TSVs and Harness-observation notes. Repeated compatible calls use cache; `--rerun` regenerates the index only.
+
+Researcher-owned method decisions remain visible. The Harness case-study section deliberately distinguishes **capability demonstrated by scripts** from **actual Agent-originated tool calls**: optional `study/harness-session.md` observations must be captured in a live DSH session, not inferred from CI. This is an engineering research record rather than a scientific-signoff system. See [M11 design and acceptance](docs/m11-integrated-record.md).
 
 ## Status and tests
 

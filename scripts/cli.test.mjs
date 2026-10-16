@@ -100,3 +100,11 @@ test('Paper-coverage commands keep imported materials in their own scope',()=>{
   assert.equal(r.status,0,r.stderr)
   assert.match(r.stderr,/paper workflow coverage composition/)
 })
+
+test('Integrated study record is read-only and supports explicit rerun',()=>{
+  assert.equal(parseArgs(['record','--rerun']).rerun,true)
+  assert.throws(()=>parseArgs(['record','--refresh']),/only for prepare/)
+  const r=spawnSync(process.execPath,[cli,'record','--dry-run'],{encoding:'utf8'})
+  assert.equal(r.status,0,r.stderr)
+  assert.match(r.stderr,/paper-to-workspace record/)
+})

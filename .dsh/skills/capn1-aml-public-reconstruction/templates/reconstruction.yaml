@@ -40,7 +40,7 @@ stages:
   enrichment:
     class: RECONSTRUCTED
     original: DAVID
-    reconstruction: clusterProfiler
+    reconstruction: python-scipy-statsmodels-ora
     status: pending
   ppi:
     class: PUBLIC-FIXED
