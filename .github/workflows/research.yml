@@ -3,7 +3,7 @@ name: CAPN1 Python M1-M10 checks
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, 'sandbox/full-run-*']
 
 permissions:
   contents: read
@@ -68,5 +68,19 @@ jobs:
         with:
           name: capn1-m1-m5-public-demo
           path: public-demo-output/
+          if-no-files-found: warn
+          retention-days: 14
+
+      # Branch-only acceptance: real public sources and M1–M11, never merged to main.
+      - name: Sandbox full public M1-M11 acceptance
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/sandbox/full-run-')
+        timeout-minutes: 130
+        run: python3 scripts/sandbox-e2e.py
+      - name: Upload sandbox acceptance evidence
+        if: always() && github.event_name == 'push' && startsWith(github.ref, 'refs/heads/sandbox/full-run-')
+        uses: actions/upload-artifact@v4
+        with:
+          name: capn1-full-sandbox-evidence
+          path: sandbox-evidence/
           if-no-files-found: warn
           retention-days: 14
